@@ -1,0 +1,27 @@
+[build-system]
+requires = ['setuptools', 'setuptools-scm']
+build-backend = 'setuptools.build_meta'
+
+
+[project]
+name = 'MM-RAG'
+authors = [
+	{name='Marco Tambasco', email='tambascomarco35@gmail.com'}
+]
+requires-python = '>=3.11'
+dependencies = [
+	'langchain',
+	'pillow',
+  'langgraph',
+  'boto3',
+  'flask',
+  'matplotlib'
+]
+version = '0.0.1'
+
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,9 @@
+langchain
+langgraph
+langchain-pinecone
+boto3
+pillow
+flask
+pdf2image
+reportlab
+nose2

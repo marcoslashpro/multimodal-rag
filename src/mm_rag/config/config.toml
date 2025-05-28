@@ -1,0 +1,16 @@
+[aws]
+bucketname = 'mm-rag-bucket-may-hot'
+
+[aws.db]
+host = 'database-1.c9qs6gswwby1.eu-central-1.rds.amazonaws.com'
+name = 'mm_rag_db'
+user = 'postgres'
+pass = 'xvn6fzypVnUhVe9e7fWp'
+
+[pinecone]
+api_key = 'pcsk_5fhQhv_MbkdCDWZ4V3AHtCocqUMkHsELtt6LcqEwZNw5zR2Dv3FpdRMMVtwj2rEY3pkCk4'
+index_name = 'files'
+namespace = 'mm-rag'
+hosting_cloud = 'aws'
+cloud_region = 'us-east-1'
+embedding-model = ''
