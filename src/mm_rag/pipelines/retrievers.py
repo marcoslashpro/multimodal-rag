@@ -52,6 +52,7 @@ class Retriever:
         raise ValueError(
           f"No Type key in the metadata of the response"
         )
+
       if file_type in ['.jpeg', '.png', '.jpg', '.pdf']:
         if not self.handler:
           raise ValueError(
@@ -64,7 +65,6 @@ class Retriever:
       else:
         print(f"\n\n=====Chunk{match_id}=====")
         print(match['metadata']['text'])
-
 
   def retrieve(self, embedded_query: list[float]) -> 'QueryResponse':
     response = self.vector_store.index.query(

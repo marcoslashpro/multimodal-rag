@@ -1,14 +1,9 @@
-import base64
-import io
 from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 from langchain_core.embeddings.embeddings import Embeddings
-from langchain_core.documents import Document
 
 import json
-
-from PIL import Image
 
 from mm_rag.logging_service.log_config import create_logger
 
