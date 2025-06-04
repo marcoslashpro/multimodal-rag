@@ -9,7 +9,7 @@ from pathlib import Path
 
 class TestLoggingService(unittest.TestCase):
   def setUp(self):
-    self.expected_path = Path(f'/home/marco/Projects/mm-rag/src/mm_rag/logging_service/logs/{__name__}.log')
+    self.expected_path = Path(__file__).parent.parent / f'logging_service/logs/{__name__}.log'
     self.logger = create_logger(__name__)
 
   def tearDown(self) -> None:
