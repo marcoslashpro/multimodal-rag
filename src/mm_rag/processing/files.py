@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
   from mm_rag.processing.processors import PdfProcessor, ImgProcessor, TxtProcessor
+  from mm_rag.processing.base import Metadata
 
 from mm_rag.processing.base import File
 
@@ -40,7 +41,6 @@ class FileFactory:
       raise ValueError(
         f'File type {file_ext} not yet supported'
       )
-
 
 
 class TxtFile(File):

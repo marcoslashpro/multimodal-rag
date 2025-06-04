@@ -44,9 +44,10 @@ class Processor(ABC):
 
   def gather_metadata(self, file_path: str, user_id) -> Metadata:
     fileName, fileType = os.path.splitext(os.path.basename(file_path))
+    fileType = fileType.removeprefix('.')
 
     return Metadata(
-      fileId=self.generate_id(fileName, user_id),
+      fileId=self.generate_id(fileType, fileName, user_id),
       fileName=fileName,
       fileType=fileType,
       created=datetime.now().isoformat(),
@@ -59,9 +60,9 @@ class Processor(ABC):
         f"The given path {file_path} does not exist in the system."
       )
 
-  def generate_id(self, file_name: str, user_id: str) -> str:
+  def generate_id(self, file_type: str, file_name: str, user_id: str) -> str:
     file_name = os.path.basename(file_name)
-    return f'{user_id}/{file_name}-{uuid4().hex[:5]}'
+    return f'{user_id}/{file_type}/{file_name}-{uuid4().hex[:5]}'
 
   def generate_ids(self, file_id: str, range_of_ids: int) -> list[str]:
     ids: list[str] = []
@@ -106,7 +107,6 @@ class File():
   @property
   def file_id(self) -> str:
     if not self._file_id:
-      self._file_id = self.processor.generate_id(self.file_path, self.owner)
+      self._file_id = self.processor.generate_id(self.metadata.fileType, self.metadata.fileName, self.owner)
 
     return self._file_id
-

@@ -60,8 +60,5 @@ class Piper:
     self.uploader.upload_in_bucket(self.file, docs)
     self.uploader.upload_in_dynamo(self.file)
 
-  def run_retrieval(self, query: str) -> Any:
-    embedded_query = self.embedder.embed_query(query)
-
-    res = self.retriever.retrieve_and_display(embedded_query)
-    return res
+  def run_retrieval(self, query: str) -> None:
+    self.retriever.retrieve_and_display(query)

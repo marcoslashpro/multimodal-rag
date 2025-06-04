@@ -27,6 +27,9 @@ class TestImgUpsertion(unittest.TestCase):
     self.mock_metadata.__dict__ = {'fileId': 'fakeId'}
     self.mock_embedder.embed_img.return_value = [float(i) for i in range(1024)]
 
+  def tearDown(self) -> None:
+    self.vector_store.vector_store.delete(['fakeId'])
+
   def test_add_img(self):
     self.assertTrue(
       self.vector_store.add_image(self.mock_img, self.mock_metadata, 'fakeId'),

@@ -1,9 +1,11 @@
 langchain
 langgraph
 langchain-pinecone
+langchain-huggingface
 boto3
 pillow
 flask
 pdf2image
 reportlab
 nose2
+moto

@@ -61,7 +61,7 @@ class TestImgHandler(unittest.TestCase):
         self.mock_bucket.download_to_buffer.side_effect = fake_download_to_buffer
 
         object_key = "test_image.jpg"
-        img_buffer = self.handler.download_from_bucket_to_temp_file(self.mock_bucket, object_key)
+        img_buffer = self.handler.download_img_from_bucket_to_temp_file(object_key, self.mock_bucket)
 
         # Assertions
         self.mock_bucket.download_to_buffer.assert_called_once()
@@ -85,20 +85,20 @@ class TestImgHandler(unittest.TestCase):
         mock_temp_file.close.assert_called_once()
 
     @patch("builtins.print")
-    @patch("mm_rag.processing.handlers.ImgHandler.retrieve_from_bucket")
+    @patch("mm_rag.processing.handlers.ImgHandler.download_img_from_bucket")
     def test_display_valid_image(self, mock_retrieve, mock_print):
         mock_retrieve.return_value = Image.new("RGB", (100, 100))
         match_id = "test_image_id"
         self.handler.display(match_id, self.mock_bucket)
-        mock_retrieve.assert_called_once_with(self.mock_bucket, match_id)
+        mock_retrieve.assert_called_once_with(from_bucket=self.mock_bucket, img_key=match_id)
         mock_print.assert_called_once()
 
-    @patch("mm_rag.processing.handlers.ImgHandler.retrieve_from_bucket", side_effect=UnidentifiedImageError)
+    @patch("mm_rag.processing.handlers.ImgHandler.download_img_from_bucket", side_effect=UnidentifiedImageError)
     @patch("mm_rag.processing.handlers.logger.error")
     def test_display_invalid_image(self, mock_logger, mock_retrieve):
         match_id = "invalid_image_id"
         self.handler.display(match_id, self.mock_bucket)
-        mock_retrieve.assert_called_once_with(self.mock_bucket, match_id)
+        mock_retrieve.assert_called_once_with(from_bucket=self.mock_bucket, img_key=match_id)
         mock_logger.assert_called_once_with(f"Trying to open a result that is not an Image: {match_id}")
 
 

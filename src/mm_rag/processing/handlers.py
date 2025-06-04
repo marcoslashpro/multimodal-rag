@@ -65,6 +65,7 @@ class ImgHandler:
     return img.resize((w, h), Image.Resampling.LANCZOS)
 
   def base64_encode(self, img: Image.Image) -> str:
+    logger.debug(f"Encoding img: {img}")
     img_buffer = self.save_img_to_buffer(img)
 
     return base64.b64encode(img_buffer.getvalue()).decode("utf-8")
@@ -76,16 +77,16 @@ class ImgHandler:
 
     return img_buffer
 
-  def retrieve_from_bucket(self, bucket: BucketService, object_key: str) -> Image.Image:
-    logger.debug(f"Downloaded object {object_key} from {bucket.name}")
-    img_buffer = self.download_from_bucket_to_temp_file(bucket, object_key)
+  def download_img_from_bucket(self, img_key: str, from_bucket: BucketService) -> Image.Image:
+    logger.debug(f"Downloaded object {img_key} from {from_bucket.name}")
+    img_buffer = self.download_img_from_bucket_to_temp_file(img_key, from_bucket)
     return self.open_img_from_buffer(img_buffer)
 
   def open_img_from_buffer(self, buffer: io.BytesIO) -> Image.Image:
       return Image.open(buffer)
 
 
-  def download_from_bucket_to_temp_file(self, bucket: BucketService, object_key: str) -> io.BytesIO:
+  def download_img_from_bucket_to_temp_file(self,  object_key: str, bucket: BucketService) -> io.BytesIO:
     img_buffer = bucket.download_to_buffer(object_key, io.BytesIO())
 
     return img_buffer
@@ -103,10 +104,9 @@ class ImgHandler:
   def display(self, match_id: str, bucket: BucketService) -> None:
     try:
       logger.debug(f'Retrieving {match_id} from bucket')
-      img: Image.Image = self.retrieve_from_bucket(bucket, match_id)
+      img: Image.Image = self.download_img_from_bucket(from_bucket=bucket, img_key=match_id)
       print(f'\n\n======Image{match_id}=======\n{img.show()}')
 
     except UnidentifiedImageError as e:
       logger.error(f"Trying to open a result that is not an Image: {match_id}")
       pass
-

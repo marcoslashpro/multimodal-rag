@@ -27,7 +27,9 @@ class Embedder(Embeddings):
     try:
       response: dict[str, Any] = self.client.invoke_model(
         modelId=self.model_id,
-        body = request_body
+        body = request_body,
+        accept="application/json",
+        contentType="application/json"
       )
     except ClientError as e:
       raise

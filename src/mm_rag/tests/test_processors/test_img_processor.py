@@ -6,6 +6,7 @@ from mm_rag.processing.files import ImgFile
 from mm_rag.processing.handlers import ImgHandler
 from langchain_core.documents import Document
 
+from uuid import UUID
 
 class TestImgProcessor(unittest.TestCase):
     def setUp(self):
@@ -52,6 +53,17 @@ class TestImgProcessor(unittest.TestCase):
         mock_file._file_content = "invalid_content"  # Invalid type
         with self.assertRaises(ValueError):
             _ = mock_file.file_content
+
+    def test_generate_id(self):
+        mock_file = ImgFile(
+            file_path="test.jpg",
+            owner="user1",
+            processor=self.processor
+        )
+        self.assertTrue(
+            mock_file.file_id.startswith('user1/jpg/test', 0, len(mock_file.file_id)),
+            f'Expected \'user1/jpg/test\', got {mock_file.file_id}'
+        )
 
 if __name__ == "__main__":
     unittest.main()

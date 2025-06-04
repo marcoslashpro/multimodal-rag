@@ -34,7 +34,12 @@ class TestEmbedder(unittest.TestCase):
         result,
         list
       )
-      mock_embed.assert_called_once_with(modelId='amazon.titan-embed-image-v1', body='{"inputText": "this"}')
+      mock_embed.assert_called_once_with(
+        modelId='amazon.titan-embed-image-v1',
+        body='{"inputText": "this"}',
+        accept='application/json',
+        contentType='application/json'
+      )
       self.assertEqual(
         result,
         [0.1, 0.2, 0.3]
