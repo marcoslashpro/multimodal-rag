@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Union
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
 from dataclasses import asdict
@@ -7,6 +7,7 @@ from langgraph.graph import StateGraph, START
 from langgraph.graph.message import add_messages
 
 from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate
 
 from mm_rag.pipelines.retrievers import Retriever
 from mm_rag.logging_service.log_config import create_logger
@@ -34,7 +35,7 @@ class State(TypedDict):
   retrieved: list[Document] | None
   img_handler: ImgHandler
   bucket: BucketService
-  augement: bool
+  query: str
 
 logger.debug(f"Created new State Schema: {State}")
 
@@ -43,9 +44,9 @@ logger.debug(f"Created graph builder: {builder}")
 
 
 def classify_input(state: State):
-  last_message = state['messages'][-1]
+  query = state['query']
   vlm = state['vlm']
-  logger.debug(f"Classifying input: {last_message}")
+  logger.debug(f"Classifying input: {query}")
 
   result = vlm.invoke(
     [
@@ -63,7 +64,7 @@ def classify_input(state: State):
         "content": [
           {
             "type": "text",
-            "text": last_message.content
+            "text": query
           }
         ]
       }
@@ -84,7 +85,7 @@ def classify_input(state: State):
   )
   logger.debug(f"Parsed model output: {parsed}")
 
-  return {"is_retrieval_required": parsed.is_retrieval_required}
+  return {"is_retrieval_required": parsed.is_retrieval_required, 'query': query}
 
 
 def router(state: State):
@@ -122,22 +123,29 @@ def chatbot(state: State):
 def retrieve(state: State):
   retriever = state['retriever']
   last_message = state['messages'][-1]
+  query = state['query']
   logger.debug(f"Running retrieval on input: {last_message}")
 
   retrieved = retriever.invoke(last_message.content)
   logger.debug(f"Found in the VectorStore: {retrieved}")
 
-  return {"retrieved": retrieved}
+  return {"retrieved": retrieved, 'query': query}
 
 
-def formatter(state: State):
+def formatter(state: State) -> dict[str, dict[str, str | list[dict[str, str | list[dict[str, str | dict[str, str]]]]]]]:
   retrieved = state.get('retrieved')
   handler = state['img_handler']
   bucket = state['bucket']
   messages = state.get("messages", [])
-  logger.debug(f"Retrieved from the state: {retrieved = }\n{handler = }\n{bucket = }\n{messages = }")
+  query = state.get('query')
+  logger.debug(f"Retrieved from the state: {retrieved = }\n{handler = }\n{bucket = }\n{messages = }\n{query = }")
 
-  formatted: list[dict[str, str]] = []
+  formatted: list[dict[str, str | list[dict[str, str | dict[str, str]]]]] = [
+    {
+      'type': 'text',
+      'text': f"Your role here is to answer the user's original query in the most relevant way possible. The original query is: '{query}'. The relevant information needed to answer this query are provided in the docs after this message. If you do not have enough information in the provided docs, then tell the user that you were not able to find enough relevant information to answer to his query. The docs: "
+    }
+  ]
 
   if not retrieved:
     logger.debug(f"Unable to generate retrieval information in node 'formatter'")
@@ -180,7 +188,7 @@ def formatter(state: State):
           )
         )
       if 'text' in formatted_message_content:
-        formatted_message_content.pop('text')
+        del(formatted_message_content['text'])
       formatted.append(formatted_message_content)
 
     else:
@@ -191,7 +199,7 @@ def formatter(state: State):
           )
         )
       if 'image_url' in formatted_message_content:
-        formatted_message_content.pop('image_url')
+        del(formatted_message_content['image_url'])
       formatted.append(formatted_message_content)
 
   logger.debug(f"Augmented message content generated successfully: {formatted}")
@@ -228,7 +236,7 @@ def run_chatbot(retriever: Retriever, vlm: VLM, img_handler: ImgHandler, bucket:
     'img_handler': img_handler,
     'bucket': bucket,
     'retrieved': None,
-    'augmented_query': None
+    'query': ''
     }
 
   while True:
@@ -238,6 +246,7 @@ def run_chatbot(retriever: Retriever, vlm: VLM, img_handler: ImgHandler, bucket:
       print('Au revoir')
       break
 
+    state['query'] = user_input
     state['messages'] = state.get("messages", []) + [
         {"role": "user", "content": user_input}
     ]

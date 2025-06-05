@@ -11,6 +11,7 @@ class TestMessageCreation(unittest.TestCase):
   def setUp(self) -> None:
     self.mock_state = MagicMock(State)
     self.maxDiff = None
+    self.query = None
 
   def tearDown(self) -> None:
     return super().tearDown()
@@ -35,6 +36,10 @@ class TestMessageCreation(unittest.TestCase):
       {
         "role": "user",
         "content": [
+          {
+            "type": "text",
+            "text": f"Your role here is to answer the user's original query in the most relevant way possible. The original query is: {self.query}. The relevant information needed to answer this query are provided in the docs after this message. If you do not have enough information in the provided docs, then tell the user that you were not able to find enough relevant information to answer to his query. The docs: "
+          },
           {"type": "text", "text": "this is a test"}
         ]
       }
@@ -72,6 +77,10 @@ class TestMessageCreation(unittest.TestCase):
           "messages": {
             "role": "user",
             "content": [
+              {
+                "type": "text",
+                "text": f"Your role here is to answer the user's original query in the most relevant way possible. The original query is: {self.query}. The relevant information needed to answer this query are provided in the docs after this message. If you do not have enough information in the provided docs, then tell the user that you were not able to find enough relevant information to answer to his query. The docs: "
+              },
               {
                 "type": "image_url",
                 "image_url": {"url": "test_url"}
@@ -114,6 +123,10 @@ class TestMessageCreation(unittest.TestCase):
       'messages': {
         "role": "user",
         "content": [
+          {
+            "type": "text",
+            "text": f"Your role here is to answer the user's original query in the most relevant way possible. The original query is: {self.query}. The relevant information needed to answer this query are provided in the docs after this message. If you do not have enough information in the provided docs, then tell the user that you were not able to find enough relevant information to answer to his query. The docs: "
+          },
           {
             "type": "text",
             "text": "test text"
