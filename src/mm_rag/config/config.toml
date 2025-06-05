@@ -1,0 +1,10 @@
+[aws]
+bucketname = 'mm-rag-bucket-may-hot'
+
+[pinecone]
+api_key = 'pcsk_3hwSv7_6zUxpqY5TGE5vHKzC3ZApUVRZYjw5PMzvtDz7FDD79qm6eG6hxdwhBhsN44fdrt'
+index_name = 'files'
+namespace = 'mm-rag'
+hosting_cloud = 'aws'
+cloud_region = 'us-east-1'
+embedding-model = ''
