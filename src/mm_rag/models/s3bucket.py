@@ -198,7 +198,7 @@ class BucketService():
       return False
     return True
   
-  def make_object_public(self, obj_key: str) -> bool:
+  def make_object_public(self, obj_key: str) -> str:
     try:
       obj_acl = self.resource.ObjectAcl(self.bucket.name, obj_key) # type: ignore
       obj_acl.put(ACL='public-read')
@@ -208,7 +208,7 @@ class BucketService():
           f"The provided object key: {obj_key} cannot be located in the bucket: {self.bucket.name}"
         )
       raise e  # Re-raise other ClientError
-    return True
+    return self.get_public_url(obj_key)
   
   def make_object_private(self, obj_key: str) -> bool:
     try:
@@ -262,6 +262,21 @@ class BucketService():
       else:
         raise e
     return buffer
+  
+  def get_public_url(self, obj_key: str) -> str:
+    return f"https://{self.name}.s3.amazonaws.com/{obj_key}"
+  
+  def generate_presigned_url(self, obj_key: str, expires_in=3600) -> str:
+    try:
+      url = self.client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": self.name, "Key": obj_key},
+        ExpiresIn=expires_in
+      )
+    except ClientError as e:
+      logger.error(e)
+      raise
+    return url
 
 if __name__ == '__main__':
   pass
