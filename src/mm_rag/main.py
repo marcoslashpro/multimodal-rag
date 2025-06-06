@@ -11,14 +11,16 @@ from mm_rag.pipelines.pipes import Piper
 from mm_rag.agents.vlm import VLM
 from mm_rag.agents.flows import run_chatbot
 from huggingface_hub import InferenceClient
+from mm_rag.utils import get_secret
 import os
 
 
 logger = create_logger(__name__)
 
+
 VectorStore = vectorstore.PineconeVectorStore(
     Embedder(),
-    config['pinecone']['api_key'],
+    get_secret()['pinecone_api_key'],
     config['pinecone']['index_name'],
     config['pinecone']['namespace'],
     config['pinecone']['hosting_cloud'],
@@ -32,8 +34,8 @@ dynamo = dynamodb.DynamoDB()
 handler = ImgHandler()
 embedder = Embedder()
 retriever = Retriever(
-      VectorStore, dynamo, bucket, embedder, handler
-    )
+  VectorStore, dynamo, bucket, embedder, handler
+)
 
 piper = Piper(
     uploader_factory=UploaderFactory(),
@@ -48,7 +50,7 @@ piper = Piper(
     img_handler=handler
   )
 client = InferenceClient(model="Qwen/Qwen2.5-VL-7B-Instruct")
-vlm = VLM(model=client, max_tokens=1000)
+vlm = VLM(model=client)
 
 def add_file() -> None:
   file_input: str = input("Insert file path: ")
@@ -75,7 +77,6 @@ def query() -> None:
 
 def chat() -> None:
   run_chatbot(retriever, vlm, handler, bucket)
-
 
 def main() -> None:
   while True:

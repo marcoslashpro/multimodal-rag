@@ -8,13 +8,10 @@ from mm_rag.config.config import config
 from mm_rag.logging_service.log_config import create_logger
 
 
-BucketName = NewType('BucketName', str)
-
-
 logger = create_logger(__name__)
 
 
-def create_bucket(bucket_name: BucketName, region: str = 'eu-central-1'):
+def create_bucket(bucket_name: str, region: str = 'eu-central-1'):
   client = boto3.client('s3')
   try:
     if region is None:
@@ -91,7 +88,7 @@ class BucketService():
     return True
 
 
-  def copy_object(self, to_bucket: BucketName, object_key: str, dest_obj_key: str | None = None) -> bool:
+  def copy_object(self, to_bucket: str, object_key: str, dest_obj_key: str | None = None) -> bool:
     copy_source = {
         'Bucket': self.name,
         'Key': object_key
@@ -126,7 +123,7 @@ class BucketService():
       return False
     return True
 
-  def move_object(self, to_bucket: BucketName, object_key: str, dest_obj_key: str | None = None) -> bool:
+  def move_object(self, to_bucket: str, object_key: str, dest_obj_key: str | None = None) -> bool:
     copied = self.copy_object(to_bucket, object_key, dest_obj_key)
     if copied:
       removed = self.remove_object(object_key)

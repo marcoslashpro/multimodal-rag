@@ -25,3 +25,7 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.scripts]
+launch-cli = "mm_rag.cli_entrypoints.main:main"
+write-env = "mm_rag.cli_entrypoints.configure:write_env"

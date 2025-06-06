@@ -2,6 +2,7 @@ from mm_rag.models.vectorstore import PineconeVectorStore
 from mm_rag.agents.mm_embedder import Embedder
 from mm_rag.processing.base import Metadata
 from mm_rag.config.config import config
+from mm_rag.utils import get_secret
 
 from pinecone import Vector
 
@@ -16,7 +17,7 @@ class TestImgUpsertion(unittest.TestCase):
     self.mock_embedder = MagicMock(Embedder)
     self.vector_store = PineconeVectorStore(
       self.mock_embedder,
-      api_key=config['pinecone']['api_key'],
+      api_key=get_secret()['pinecone_api_key'],
       index_name=config['pinecone']['index_name'],
       namespace='mock_namespace',
       cloud='aws',

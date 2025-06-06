@@ -1,3 +1,4 @@
+-e .
 langchain
 langgraph
 langchain-pinecone
@@ -9,3 +10,4 @@ pdf2image
 reportlab
 nose2
 moto
+python-dotenv
