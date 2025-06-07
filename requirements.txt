@@ -11,3 +11,7 @@ reportlab
 nose2
 moto
 python-dotenv
+fastapi
+mangum
+uvicorn
+python-multipart

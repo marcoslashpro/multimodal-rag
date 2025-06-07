@@ -45,11 +45,15 @@ class VLM(BaseChatModel):
   def _generate(self, messages: List[BaseMessage], stop: List[str] | None = None, run_manager: CallbackManagerForLLMRun | None = None, **kwargs: Any) -> ChatResult:
     formatted_messages = self.format_messages(messages)
     logger.debug("Formatted messages: %s" % formatted_messages)
+    for i, msg in enumerate(formatted_messages):
+      logger.debug(f"Message[{i}] type: {type(msg)} content: {repr(msg)}")
+    logger.debug(f"Types: {[type(m) for m in formatted_messages]}")
+
 
     logger.debug(f"Calling chat completions with model: {self.model.model}")
 
     response = self.model.chat.completions.create(
-      formatted_messages,
+      messages=formatted_messages,
       model=self.model.model
     )
 
@@ -58,7 +62,10 @@ class VLM(BaseChatModel):
 
     content = response.choices[0].message.content
     if content is None:
-      raise AttributeError()  # TODO: improve logging
+      logger.error(f"Was not able to generate content for {formatted_messages}")
+      raise AttributeError(
+        f"Response object for query: {formatted_messages} has no content key."
+      )  # TODO: improve logging
 
     # Format the response in a LangChain-friendly way
     try:
@@ -74,7 +81,7 @@ class VLM(BaseChatModel):
 
   @property
   def _llm_type(self) -> str:
-    return 'vlm'
+    return 'qwen-vlm'
   
   def format_messages(self, messages: List[BaseMessage]) -> list[dict[Any, Any]]:
     formatted_messages: List[dict[Any, Any]] = []

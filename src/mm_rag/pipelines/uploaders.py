@@ -134,6 +134,8 @@ class TxtUploader(Uploader):
     return True
 
   def upload_in_bucket(self, file: Union['TxtFile', 'ImgFile', 'PdfFile'], docs: list[Document] | None = None) -> None:
+    logger.debug(f"Inserting {file.metadata.fileName} in {self.bucket.name}")
+
     if not isinstance(file, TxtFile):
       raise ValueError(
         f'Expected object of type TxtFile got {type(file)} for TxtPiper'
@@ -145,9 +147,14 @@ class TxtUploader(Uploader):
         file.file_id
         )
     except ClientError as e:
+      logger.error(f"Error while upserting {file.metadata.fileName} in bucket {self.bucket.name}: {e}")
       raise
 
+    logger.debug("Done")
+
   def upload_in_dynamo(self, file: Union['TxtFile', 'ImgFile', 'PdfFile']) -> None:
+    logger.debug(f"Inserting {file.metadata.fileName} in DynamoDb")
+
     if not isinstance(file, TxtFile):
       raise ValueError(
         f"Expected file of type TxtFile, got {type(file)}"
@@ -159,6 +166,8 @@ class TxtUploader(Uploader):
       file.owner,
       file.metadata.__dict__
     )
+
+    logger.debug("Done")
 
 
 class ImgUploader(Uploader):
@@ -187,6 +196,8 @@ class ImgUploader(Uploader):
     return True
 
   def upload_in_bucket(self, file: Union['ImgFile', 'TxtFile', 'PdfFile'], docs: list[Document] | None = None) -> None:
+    logger.debug(f"Inserting {file.metadata.fileName} in {self.bucket.name}")
+    
     if not isinstance(file, ImgFile):
       raise ValueError(
         f'Expected file of type ImgFile, got {type(file)}'
@@ -200,9 +211,14 @@ class ImgUploader(Uploader):
         file.file_id
         )
     except ClientError as e:
+      logger.error(f"Error while upserting {file.metadata.fileName} in bucket {self.bucket.name}: {e}")
       raise
 
+    logger.debug("Done")
+
   def upload_in_dynamo(self, file: 'TxtFile | ImgFile | PdfFile') -> None:
+    logger.debug(f"Inserting {file.metadata.fileName} in DynamoDb")
+
     if not isinstance(file, ImgFile):
       raise ValueError(
         f"Expected file of type ImgFile, got {type(file)}"
@@ -214,6 +230,8 @@ class ImgUploader(Uploader):
       file.owner,
       file.metadata.__dict__
     )
+
+    logger.debug("Done")
 
 
 class PdfUploader(Uploader):
@@ -248,6 +266,8 @@ class PdfUploader(Uploader):
     return True
 
   def upload_in_bucket(self, file: Union['TxtFile', 'PdfFile', 'ImgFile'], docs: list[Document] | None = None) -> None:
+    logger.debug(f"Inserting {file.metadata.fileName} in {self.bucket.name}")
+
     if not isinstance(file, PdfFile):
       raise ValueError(
         f"Expected file of type PdfFile, got {type(file)}"
@@ -268,12 +288,20 @@ class PdfUploader(Uploader):
 
       page_buffer = self.handler.save_img_to_buffer(page)
 
-      self.bucket.upload_object_from_file(
-        page_buffer,
-        page_id
-      )
+      try:
+        self.bucket.upload_object_from_file(
+          page_buffer,
+          page_id
+        )
+      except ClientError as e:
+        logger.error(f"Error while upserting {file.metadata.fileName} in bucket {self.bucket.name}: {e}")
+        raise 
+
+      logger.debug("Done")
 
   def upload_in_dynamo(self, file: 'TxtFile | ImgFile | PdfFile') -> None:
+    logger.debug(f"Inserting {file.metadata.fileName} in DynamoDb")
+
     if not isinstance(file, PdfFile):
       raise ValueError(
         f"Expected file of type PdfFile, got {type(file)}"
@@ -285,3 +313,5 @@ class PdfUploader(Uploader):
       file.owner,
       file.metadata.__dict__
     )
+
+    logger.debug("Done")

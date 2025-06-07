@@ -126,7 +126,7 @@ def retrieve(state: State):
   query = state['query']
   logger.debug(f"Running retrieval on input: {last_message}")
 
-  retrieved = retriever.invoke(last_message.content)
+  retrieved: list[Document] = retriever.invoke(last_message.content)
   logger.debug(f"Found in the VectorStore: {retrieved}")
 
   return {"retrieved": retrieved, 'query': query}
@@ -227,7 +227,7 @@ builder.add_edge("format", "chatbot")
 graph = builder.compile()
 
 
-def run_chatbot(retriever: Retriever, vlm: VLM, img_handler: ImgHandler, bucket: BucketService):
+def run_chatbot(query: str, retriever: Retriever, vlm: VLM, img_handler: ImgHandler, bucket: BucketService):
   state = {
     "messages": [],
     "is_retrieve_required": None,
@@ -236,26 +236,21 @@ def run_chatbot(retriever: Retriever, vlm: VLM, img_handler: ImgHandler, bucket:
     'img_handler': img_handler,
     'bucket': bucket,
     'retrieved': None,
-    'query': ''
+    'query': query
     }
 
-  while True:
-    user_input = input("You: ")
+  state['messages'] = state.get("messages", []) + [
+    {"role": "user", "content": state['query']}
+  ]
 
-    if user_input == "quit":
-      print('Au revoir')
-      break
+  state = graph.invoke(state)
 
-    state['query'] = user_input
-    state['messages'] = state.get("messages", []) + [
-        {"role": "user", "content": user_input}
-    ]
+  if state.get("messages") and len(state['messages']) > 0:
+    last_message = state['messages'][-1]
 
-    state = graph.invoke(state)
+    logger.debug(f"Last message content: {last_message.content}")
 
-    if state.get("messages") and len(state['messages']) > 0:
-      last_message = state['messages'][-1]
-      print(f"Jarvis: {last_message.content}\n")
+    return last_message.content
 
 if __name__ == "__main__":
   pass

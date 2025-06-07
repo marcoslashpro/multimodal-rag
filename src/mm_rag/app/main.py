@@ -1,0 +1,23 @@
+from fastapi import FastAPI
+from mangum import Mangum
+from mm_rag.app.routes.views.add_file import upload_router
+from mm_rag.app.routes.views.search import search_router
+from mm_rag.app.routes.views.chat import chat_router
+
+app = FastAPI()
+app.include_router(upload_router)
+app.include_router(search_router)
+app.include_router(chat_router)
+
+
+handler = Mangum(app)
+
+
+@app.get("/")
+async def root():
+  return {
+    "status": 200,
+    "body": {
+      "message": "multi-modal RAG"
+    }
+  }

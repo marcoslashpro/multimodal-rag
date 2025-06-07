@@ -51,7 +51,7 @@ class DynamoDB:
       )
 
       table.wait_until_exists()
-      return table# type: ignore
+      return table  # type: ignore
 
     # If the table already exists it raises an error
     except ClientError as e:
