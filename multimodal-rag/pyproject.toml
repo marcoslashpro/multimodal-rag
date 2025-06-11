@@ -1,0 +1,37 @@
+[build-system]
+requires = ['setuptools', 'setuptools-scm']
+build-backend = 'setuptools.build_meta'
+
+
+[project]
+name = 'mm_rag'
+authors = [
+	{name='Marco Tambasco', email='tambascomarco35@gmail.com'}
+]
+requires-python = '>=3.11'
+dependencies = [
+  'langchain',
+  'langgraph',
+  'langchain-pinecone',
+  'langchain-huggingface',
+  'boto3',
+  'pillow',
+  'pdf2image',
+  'python-dotenv',
+  'pinecone',
+  'fastapi',
+  'mangum',
+  'uvicorn',
+  'python-multipart',
+]
+version = '0.0.1'
+
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+launch-cli = "mm_rag.cli_entrypoints.main:main"

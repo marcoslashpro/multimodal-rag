@@ -1,0 +1,4 @@
+httpx
+nose2
+moto
+reportlab

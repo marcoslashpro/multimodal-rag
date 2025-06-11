@@ -1,0 +1,15 @@
+-e .
+
+langchain
+langgraph
+langchain-pinecone
+langchain-huggingface
+boto3
+pillow
+pdf2image
+python-dotenv
+pinecone
+fastapi
+mangum
+uvicorn
+python-multipart
