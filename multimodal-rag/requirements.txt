@@ -1,15 +1,2 @@
--e .
-
-langchain
-langgraph
-langchain-pinecone
-langchain-huggingface
-boto3
-pillow
-pdf2image
-python-dotenv
-pinecone
-fastapi
-mangum
-uvicorn
-python-multipart
+aws-cdk-lib==2.199.0
+constructs>=10.0.0,<11.0.0
