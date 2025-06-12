@@ -1,58 +1,68 @@
+# multimodal-rag (MVP)
 
-# Welcome to your CDK Python project!
+Welcome to **multimodal-rag**, an MVP solution designed to enhance your understanding of your documents — whether they're images, text files, or PDFs — using Retrieval-Augmented Generation (RAG).
 
-This is a blank project for CDK development with Python.
+---
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## 🧱 The Stack
 
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
+This application was built with scalability and modularity in mind. Thanks to a class-based architecture, replacing or upgrading backend components is straightforward. Here's a breakdown of the current stack:
 
-To manually create a virtualenv on MacOS and Linux:
+- **Pinecone**: Stores and retrieves vector embeddings along with metadata.
+- **AWS** plays a central role in infrastructure:
+  - **S3**: Stores full file objects, which are retrievable after identifying matches in Pinecone.
+  - **DynamoDB**: Stores user credentials and minimal file metadata.
+  - **Bedrock**: Used to run inference on the embedding model (_Titan Multimodal Embeddings G1_).
+  - **Secrets Manager**: Manages sensitive variables like the Hugging Face token and Pinecone API key.
+  - **CDK**: Deploys the application serverlessly to **AWS Lambda**.
+- **LangChain**: Orchestrates key components like the embedder, vector store, retriever, and chatbot flow.
+- **Hugging Face InferenceClient**: Powers the **VLM** (Vision-Language Model).
+  - Current model: _Qwen2.5-VL-7B-Instruct_ — lightweight but capable of explaining complex queries with the right prompt.
+- **FastAPI** + **Mangum**: Provides the web API layer, compatible with AWS Lambda.
 
-```
-$ python3 -m venv .venv
-```
+---
 
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
+## 🧪 Testing
 
-```
-$ source .venv/bin/activate
-```
+Tests are split into two main categories:
 
-If you are a Windows platform, you would activate the virtualenv like this:
+- **Unit Tests**: Written using Python’s built-in `unittest` module.
+- **End-to-End Tests**: Managed via `pytest`.
 
-```
-% .venv\Scripts\activate.bat
-```
+Robust testing ensures the application is reliable, maintainable, and easy to expand.
 
-Once the virtualenv is activated, you can install the required dependencies.
+---
 
-```
-$ pip install -r requirements.txt
-```
+## ⚙️ Core Features
 
-At this point you can now synthesize the CloudFormation template for this code.
+Key functionalities include:
 
-```
-$ cdk synth
-```
+- Upload various document types (text, images, PDFs):
+  - Stored in **S3** (full file)
+  - Embedded and stored in **Pinecone**
+- Two main interaction modes:
+  - **Search**: Retrieve relevant chunks from your knowledge base.
+  - **Chat**: Interact with the VLM, which can autonomously retrieve and explain relevant information.  
+    > Just ask: *“Retrieve X and explain it”* — it’ll handle the rest.
 
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
+For an overview of the chat pipeline, refer to this diagram:  
+📊 [mm-rag-agent-flow](https://github.com/user-attachments/assets/344b4980-ec2a-40e2-9e7b-30a970782cc8)
 
-## Useful commands
+---
 
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
+## 🚀 How to Access
 
-Enjoy!
+As this is currently an MVP, access requires a personal token.  
+If you're interested in testing or contributing, feel free to reach out:
+
+📧 **tambascomarco35@gmail.com**
+
+Once we chat, I may provide you with an access token and API documentation.
+
+---
+
+## 🧭 Roadmap
+
+Next major milestone: **UI implementation**
+
+Stay tuned!
