@@ -11,6 +11,7 @@ from mm_rag.app.utils import authorize
 
 from uuid import uuid4
 
+
 logger = create_logger(__name__)
 chat_router = APIRouter()
 

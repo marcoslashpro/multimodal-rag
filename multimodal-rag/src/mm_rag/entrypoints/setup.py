@@ -39,12 +39,12 @@ piper = Piper(
     processor_factory=ProcessorFactory(),
     retriever_factory=retriever_factory,
     file_factory=FileFactory(),
-    owner='user123',
     embedder=embedder,
     dynamo=dynamo,
     vector_store_factory=vector_store_factory,
     s3=bucket,
     img_handler=handler
   )
+
 client = InferenceClient(model="Qwen/Qwen2.5-VL-7B-Instruct", api_key=get_secret()['hf_token'])
 vlm = VLM(model=client)

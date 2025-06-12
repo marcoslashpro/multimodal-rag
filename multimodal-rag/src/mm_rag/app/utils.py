@@ -19,22 +19,17 @@ import os
 logger = create_logger(__name__)
 
 
-def write_file_to_lambda_path(file: UploadFile) -> str:
-  if not file.filename:
-    logger.debug(f'Found UploadFile object with no file name: {file}')
-    raise AttributeError(
-      f"No filename found for the given file {file}, please provide it."
-    )
+def write_file_to_lambda_path(file: bytes, filename: str) -> str:
 
-  file_path = os.path.join(lambda_dir, file.filename)
+  file_path = os.path.join(lambda_dir, filename)
 
   try:
     with open(file_path, 'wb') as f:
-      shutil.copyfileobj(file.file, f)
-  except shutil.Error as e:
-    raise RuntimeError(
-      f"Error while converting the provided file {file.filename} to a serverless-friendly file: {e}"
-    )
+      f.write(file)
+
+  except Exception as e:
+    logger.error(f"Error while converting the provided file {filename} to a serverless-friendly file: {e}")
+    raise HTTPException(500, f"Error while converting the provided file {filename} to a serverless-friendly file: {e}")
 
   return file_path
 

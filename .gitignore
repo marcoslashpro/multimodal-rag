@@ -176,3 +176,6 @@ cython_debug/
 # AWS cdk stuuf
 cdk.*/
 cdk.out/*
+
+# API URL
+api-url.txt

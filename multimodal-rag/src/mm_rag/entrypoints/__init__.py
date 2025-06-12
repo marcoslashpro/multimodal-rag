@@ -15,7 +15,9 @@ def upload_file(file_input: str, namespace: str) -> None:
   if not os.path.exists(file_input):
 
     logger.error(f"Provided file path: {file_input} does not exist")
-    raise FileNotFoundError()
+    raise FileNotFoundError(
+      f"Provided file path: {file_input} does not exist"
+    )
 
   setup.piper.run_upload(file_input, namespace)
 

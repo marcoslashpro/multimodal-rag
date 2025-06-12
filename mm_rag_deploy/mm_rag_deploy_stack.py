@@ -3,8 +3,15 @@ from aws_cdk import (
     Stack,
     aws_lambda as lambda_,
     CfnOutput,
-    aws_iam as iam
+    aws_iam as iam,
 )
+from aws_cdk.aws_apigatewayv2_alpha import (
+    CorsHttpMethod,
+    CorsPreflightOptions,
+    HttpApi,
+    HttpMethod
+)
+from aws_cdk.aws_apigatewayv2_integrations_alpha import HttpLambdaIntegration
 from constructs import Construct
 
 class MmRagDeployStack(Stack):
@@ -17,6 +24,42 @@ class MmRagDeployStack(Stack):
             code=lambda_.DockerImageCode.from_image_asset("./multimodal-rag"),
             timeout=Duration.seconds(120),
             memory_size=1024
+        )
+
+        # Create HttpAPI
+        api = HttpApi(
+            self, "HttpAPI",
+            cors_preflight=CorsPreflightOptions(
+                allow_methods=[
+                    CorsHttpMethod.DELETE,
+                    CorsHttpMethod.GET,
+                    CorsHttpMethod.OPTIONS,
+                    CorsHttpMethod.POST,
+                    CorsHttpMethod.PUT,
+                ],
+                allow_headers=[
+                    "Authorization",
+                    "Content-Type"
+                ],
+                allow_origins=["*"]
+            )
+        )
+
+        # Integrate API into Lambda
+        integration = HttpLambdaIntegration(
+            "LambdaIntegration", docker_func
+        )
+
+        api.add_routes(
+            path="/{proxy+}",
+            methods=[
+                HttpMethod.GET,
+                HttpMethod.POST,
+                HttpMethod.PUT,
+                HttpMethod.PATCH,
+                HttpMethod.DELETE,
+            ],
+            integration=integration,
         )
 
         # Secrets Manager Access
@@ -73,17 +116,8 @@ class MmRagDeployStack(Stack):
             )
         )
 
-        docker_func_url = docker_func.add_function_url(
-            auth_type=lambda_.FunctionUrlAuthType.NONE,
-            cors={
-                "allowed_methods": [lambda_.HttpMethod.ALL],
-                "allowed_headers": ["*"],
-                "allowed_origins": ["*"]
-            }
-        )
-
         CfnOutput(
             self,
-            "FunctionUrlValue",
-            value=docker_func_url.url
+            "HttpApiUrl",
+            value=api.url or "No URL found"
         )
