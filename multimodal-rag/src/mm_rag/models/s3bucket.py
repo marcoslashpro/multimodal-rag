@@ -6,6 +6,7 @@ import io
 
 from mm_rag.config.config import config
 from mm_rag.logging_service.log_config import create_logger
+from mm_rag.exceptions.models_exceptions import MissingRegionError, BucketAccessError, ObjectUpsertionError
 
 
 logger = create_logger(__name__)
@@ -15,7 +16,8 @@ def create_bucket(bucket_name: str, region: str = 'eu-central-1'):
   client = boto3.client('s3')
   try:
     if region is None:
-      bucket = client.create_bucket(Bucket=bucket_name)
+      raise MissingRegionError(f'In order to create the bucket {bucket_name}, please specify also a region.')
+
     else:
       location = {'LocationConstraint': region}
       bucket = client.create_bucket(
@@ -56,21 +58,19 @@ class BucketService():
     if object_name is None:
       object_name = os.path.basename(file_path)
 
+    if self.object_exists(object_name):
+      return True
+
     try:
       self.client.upload_file(
         file_path,
         self.name,
         object_name,
-        # Use 'ExtraArgs for metadata: : dict[str, dict[str, Any]]
-        # ExtraArgs = {
-          # 'Metadata': {
-            # 'mykey': 'myvalue'
-          # }
-        # }
-        )
+      )
     except ClientError as e:
       logger.error(e)
-      return False
+      raise ObjectUpsertionError(f"Error while trying to put object {object_name} in the bucket {self.bucket.name}: {str(e)}")
+
     return True
 
   def upload_object_from_file(
@@ -79,6 +79,9 @@ class BucketService():
       object_key: str
   ) -> bool:
 
+    if self.object_exists(object_key):
+      return True
+
     try:
       self.client.upload_fileobj(
         file_obj,
@@ -86,9 +89,8 @@ class BucketService():
         object_key
       )
     except ClientError as e:
-      raise
+      raise ObjectUpsertionError(f"Error while trying to put object {object_key} in the bucket {self.bucket.name}: {str(e)}")
     return True
-
 
   def copy_object(self, to_bucket: str, object_key: str, dest_obj_key: str | None = None) -> bool:
     copy_source = {
@@ -208,7 +210,7 @@ class BucketService():
         )
       raise e  # Re-raise other ClientError
     return self.get_public_url(obj_key)
-  
+
   def make_object_private(self, obj_key: str) -> bool:
     try:
       obj_acl = self.resource.ObjectAcl(self.bucket.name, obj_key) # type: ignore
@@ -220,7 +222,6 @@ class BucketService():
         )
       raise e  # Re-raise other ClientError
     return True
-
 
   def create_website_config(self, index_html: str) -> bool:
     """
@@ -261,10 +262,10 @@ class BucketService():
       else:
         raise e
     return buffer
-  
+
   def get_public_url(self, obj_key: str) -> str:
     return f"https://{self.name}.s3.amazonaws.com/{obj_key}"
-  
+
   def generate_presigned_url(self, obj_key: str, expires_in=3600) -> str:
     try:
       url = self.client.generate_presigned_url(
@@ -276,6 +277,19 @@ class BucketService():
       logger.error(e)
       raise
     return url
+
+  def object_exists(self, object_key: str) -> bool:
+    try:
+      self.client.get_object(
+        Bucket=self.bucket.name,
+        Key=object_key
+      )
+    except ClientError as e:
+      if e.response['Error']['Code'] == 'NoSuchKey':
+        return False
+
+    logger.info(f"Not upserting {object_key} as it already exists in the bucket {self.bucket}")
+    return True
 
 if __name__ == '__main__':
   pass

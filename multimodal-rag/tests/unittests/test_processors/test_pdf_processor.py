@@ -1,20 +1,42 @@
+import os
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from PIL import Image
 from mm_rag.processing.processors import PdfProcessor
 from mm_rag.processing.files import PdfFile
 from mm_rag.processing.handlers import ImgHandler
 from langchain_core.documents import Document
 
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+
+def create_test_pdf(filename: str):
+    c = canvas.Canvas(filename, pagesize=letter)
+    c.drawString(100, 750, "This is a test PDF file.")
+    c.drawString(100, 735, "It was generated using Python.")
+    c.save()
+
 
 class TestPdfProcessor(unittest.TestCase):
     def setUp(self):
+        self.mock_pdf_file = 'test_file.pdf'
+        create_test_pdf(self.mock_pdf_file)
         self.handler = MagicMock(spec=ImgHandler)
         self.processor = PdfProcessor(embedder=MagicMock(), handler=self.handler)
 
+        self.mock_file = PdfFile(
+            file_path=self.mock_pdf_file,
+            owner="user1",
+            processor=self.processor
+        )
+
+    def tearDown(self):
+        if os.path.exists(self.mock_pdf_file):
+            os.remove(self.mock_pdf_file)
+
     def test_process_valid_pdf_file(self):
         mock_file = PdfFile(
-            file_path="test.pdf",
+            file_path=self.mock_pdf_file,
             owner="user1",
             processor=self.processor
         )
@@ -44,14 +66,20 @@ class TestPdfProcessor(unittest.TestCase):
         self.assertTrue(all(id.startswith("123/chunk") for id in ids))
 
     def test_file_content_validation(self):
-        mock_file = PdfFile(
-            file_path="test.pdf",
-            owner="user1",
-            processor=self.processor
-        )
-        mock_file._file_content = "invalid_content"  # Invalid type
+        self.mock_file._file_content = "invalid_content"  # Invalid type
         with self.assertRaises(ValueError):
-            _ = mock_file.file_content
+            _ = self.mock_file.file_content
+
+    def test_all_doc_id_equal_file_id(self):
+        self.handler.base64_encode.return_value = "encoded_image"
+
+        docs = self.processor.process(self.mock_file)
+        for doc in docs:
+            self.assertTrue(doc.id.startswith(self.mock_file.file_id))
+
+    def test_file_id_equals_metadata_id(self):
+        self.assertEqual(self.mock_file.file_id, self.mock_file.metadata.fileId)
+
 
 if __name__ == "__main__":
     unittest.main()

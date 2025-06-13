@@ -25,8 +25,7 @@ class TestPdfFile(unittest.TestCase):
   def setUp(self):
     self.mock_pdf_file = 'test_file.pdf'
     create_test_pdf(self.mock_pdf_file)
-    self.mock_processor = MagicMock(PdfProcessor)
-    self.mock_processor.handler = MagicMock(ImgHandler)
+    self.mock_processor = PdfProcessor(MagicMock(), MagicMock(ImgHandler))
     self.mock_owner = 'user123'
 
     self.file = PdfFile(
@@ -34,8 +33,6 @@ class TestPdfFile(unittest.TestCase):
       self.mock_owner,
       self.mock_processor
     )
-
-    self.mock_processor.load_from_path.return_value = convert_from_path(self.mock_pdf_file)
 
   def tearDown(self) -> None:
     if os.path.exists(self.mock_pdf_file):
@@ -59,6 +56,11 @@ class TestPdfFile(unittest.TestCase):
       self.assertEqual(
         encoded, expected
       )
+
+  def test_right_ids(self):
+    self.assertEqual(
+      self.file.file_id, self.file.metadata.fileId
+    )
 
 
 if __name__ == "__main__":

@@ -62,7 +62,7 @@ class Processor(ABC):
 
   def generate_id(self, file_type: str, file_name: str, user_id: str) -> str:
     file_name = os.path.basename(file_name)
-    return f'{user_id}/{file_type}/{file_name}-{uuid4().hex[:5]}'
+    return f'{user_id}/{file_type}/{file_name}'
 
   def generate_ids(self, file_id: str, range_of_ids: int) -> list[str]:
     ids: list[str] = []

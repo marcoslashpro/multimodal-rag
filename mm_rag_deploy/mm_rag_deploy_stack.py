@@ -106,7 +106,9 @@ class MmRagDeployStack(Stack):
                     "dynamodb:GetItem",
                     "dynamodb:UpdateItem",
                     "dynamodb:Query",
-                    "dynamodb:Scan"
+                    "dynamodb:Scan",
+                    "dynamodb:BatchWriteItem",
+                    "dynamodb:DeleteItem"
                 ],
                 resources=[
                     'arn:aws:dynamodb:eu-central-1:156041399509:table/files',

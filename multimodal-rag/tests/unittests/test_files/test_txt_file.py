@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch, call
 class TestTxtFile(unittest.TestCase):
   def setUp(self):
     self.mock_txt_file = 'test_file.txt'
-    self.mock_processor = MagicMock(TxtProcessor)
+    self.mock_processor = TxtProcessor(MagicMock())
     self.mock_owner = 'user123'
 
     self.file = TxtFile(
@@ -22,8 +22,6 @@ class TestTxtFile(unittest.TestCase):
     with open(self.mock_txt_file, 'w') as f:
       f.write(self.expected_content)
 
-    with open(self.mock_txt_file, 'r') as f:
-      self.mock_processor.load_from_path.return_value = f.read()
 
   def tearDown(self) -> None:
     if os.path.exists(self.mock_txt_file):
@@ -35,6 +33,11 @@ class TestTxtFile(unittest.TestCase):
     )
 
     self.assertEqual(self.file.file_content, self.expected_content)
+
+  def test_right_file_id(self):
+    self.assertEqual(
+      self.file.file_id, self.file.metadata.fileId
+    )
 
 
 if __name__ == "__main__":

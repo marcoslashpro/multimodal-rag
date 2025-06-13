@@ -1,13 +1,12 @@
-from mm_rag.pipelines.retrievers import Retriever
-from mm_rag.processing.handlers import ImgHandler
-from mm_rag.models import dynamodb, vectorstore, s3bucket
-from mm_rag.agents.mm_embedder import Embedder
+from src.mm_rag.pipelines.retrievers import Retriever
+from src.mm_rag.processing.handlers import ImgHandler
+from src.mm_rag.models import dynamodb, vectorstore, s3bucket
+from src.mm_rag.agents.mm_embedder import Embedder
 
 from unittest.mock import MagicMock, patch
 import unittest
 
 from langchain_core.documents import Document
-from pinecone.data import QueryResponse
 
 from PIL import Image
 
@@ -69,11 +68,11 @@ class TestImgRetrieveMethod(unittest.TestCase):
 
   def test_retrieve_method(self):
     mock_query = 'mock_query'
-    mock_response = [MagicMock(QueryResponse)]
+    mock_response = [MagicMock()]
     mock_response[0].id = prop_response['matches'][0].get('id')
     mock_response[0].metadata = prop_response['matches'][0].get('metadata')
 
-    with patch('mm_rag.pipelines.retrievers.Retriever.retrieve', return_value=mock_response) as mock_retrieve,\
+    with patch('src.mm_rag.pipelines.retrievers.Retriever.retrieve', return_value=mock_response) as mock_retrieve,\
         patch.object(self.retriever._handler, 'display', return_value=None) as mock_display,\
         patch.object(self.retriever._embedder, 'embed_query', return_value=[0.1, 0.2]):
         self.retriever.retrieve(mock_query)

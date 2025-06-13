@@ -129,5 +129,6 @@ class PineconeVectorStore(VectorStoreFactory):
   def clean(self) -> None:
     self.vector_store.delete(delete_all=True)
 
+
 if __name__ == '__main__':
   pass

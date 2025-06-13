@@ -4,6 +4,7 @@ import uvicorn
 from mm_rag.app.routes.views.add_file import upload_router
 from mm_rag.app.routes.views.search import search_router
 from mm_rag.app.routes.views.chat import chat_router
+from mm_rag.app.routes.views.clean import cleanup_router
 from mm_rag.logging_service.log_config import create_logger
 
 
@@ -16,6 +17,7 @@ app = FastAPI()
 app.include_router(upload_router)
 app.include_router(search_router)
 app.include_router(chat_router)
+app.include_router(cleanup_router)
 
 
 handler = Mangum(app)

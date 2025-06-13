@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest.mock import MagicMock
 from PIL import Image
@@ -10,8 +11,21 @@ from uuid import UUID
 
 class TestImgProcessor(unittest.TestCase):
     def setUp(self):
+        self.mock_file_path = "test.jpg"
+        img = Image.new('RGB', (10, 10))
+        img.save(self.mock_file_path)
+
         self.handler = MagicMock(spec=ImgHandler)
         self.processor = ImgProcessor(embedder=MagicMock(), handler=self.handler)
+        self.mock_file = ImgFile(
+            file_path=self.mock_file_path,
+            owner="user1",
+            processor=self.processor
+        )
+
+    def tearDown(self) -> None:
+        if os.path.exists(self.mock_file_path):
+            os.remove(self.mock_file_path)
 
     def test_process_valid_img_file(self):
         mock_file = ImgFile(
@@ -55,15 +69,21 @@ class TestImgProcessor(unittest.TestCase):
             _ = mock_file.file_content
 
     def test_generate_id(self):
-        mock_file = ImgFile(
-            file_path="test.jpg",
-            owner="user1",
-            processor=self.processor
-        )
         self.assertTrue(
-            mock_file.file_id.startswith('user1/jpg/test', 0, len(mock_file.file_id)),
-            f'Expected \'user1/jpg/test\', got {mock_file.file_id}'
+            self.mock_file.file_id.startswith('user1/jpg/test', 0, len(self.mock_file.file_id)),
+            f'Expected \'user1/jpg/test\', got {self.mock_file.file_id}'
         )
+
+    def test_all_doc_id_equal_file_id(self):
+        self.handler.base64_encode.return_value = "encoded_image"
+
+        docs = self.processor.process(self.mock_file)
+        for doc in docs:
+            self.assertTrue(doc.id.startswith(self.mock_file.file_id))
+
+    def test_file_id_equals_metadata_id(self):
+        self.assertEqual(self.mock_file.file_id, self.mock_file.metadata.fileId)
+
 
 if __name__ == "__main__":
     unittest.main()

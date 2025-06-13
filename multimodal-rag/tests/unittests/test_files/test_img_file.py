@@ -13,8 +13,7 @@ class TestImgFile(unittest.TestCase):
   def setUp(self):
     self.mock_img_file = 'test_file.jpeg'
     Image.new('RGB', (10, 10), 'red').save(self.mock_img_file)
-    self.mock_processor = MagicMock(ImgProcessor)
-    self.mock_processor.handler = MagicMock(ImgHandler)
+    self.mock_processor = ImgProcessor(MagicMock(), MagicMock(ImgHandler))
     self.mock_owner = 'user123'
 
     self.file = ImgFile(
@@ -22,8 +21,6 @@ class TestImgFile(unittest.TestCase):
       self.mock_owner,
       self.mock_processor
     )
-
-    self.mock_processor.load_from_path.return_value = Image.open(self.mock_img_file, formats=['JPEG'])
 
   def tearDown(self) -> None:
     if os.path.exists(self.mock_img_file):
@@ -43,6 +40,11 @@ class TestImgFile(unittest.TestCase):
     )
 
     self.assertIsInstance(self.file.encodings, str)
+
+  def test_right_id(self):
+    self.assertEqual(
+      self.file.file_id, self.file.metadata.fileId
+    )
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ import secrets
 
 from mm_rag.app import lambda_dir
 from mm_rag.logging_service.log_config import create_logger
-from mm_rag.models.exceptions import MissingItemError
+from mm_rag.exceptions.models_exceptions import MissingItemError
 from mm_rag.models.dynamodb import DynamoDB
 
 from fastapi import UploadFile, HTTPException, Response

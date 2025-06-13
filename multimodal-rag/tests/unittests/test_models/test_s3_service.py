@@ -1,3 +1,5 @@
+import os
+from tempfile import NamedTemporaryFile
 from mm_rag.models.s3bucket import BucketService
 
 import unittest
@@ -20,8 +22,14 @@ class TestS3Service(unittest.TestCase):
 
     self.service = BucketService(bucket)
 
+    self.mock_file_path = 'test.txt'
+    with open(self.mock_file_path, 'w') as f:
+      f.write("this is a test")
+
   def tearDown(self) -> None:
     self.mock_aws.stop()
+    if os.path.exists(self.mock_file_path):
+      os.remove(self.mock_file_path)
 
   def test_make_object_public_success(self):
     self.service.bucket.put_object(Key='example.txt', Body='This is a test')
@@ -66,6 +74,19 @@ class TestS3Service(unittest.TestCase):
       self.service.make_object_private("nonexistent.txt")
     self.assertIn("cannot be located", str(context.exception))
 
+  def test_not_upload_same_file(self):
+    test_key = 'example.txt'
+    test_body = 'TestBody'
+    self.service.bucket.put_object(Key=test_key, Body=test_body)
+
+    with patch.object(self.service, 'object_exists', return_value=True),\
+      patch.object(self.service.bucket, 'put_object') as mock_upsert:
+
+      self.service.upload_object_from_file(self.mock_file_path, test_key)
+      with open(self.mock_file_path) as f:
+        self.service.upload_object_from_file(f.read(), 'example.txt')
+
+      mock_upsert.assert_not_called()
 
 if __name__ == "__main__":
   unittest.main()

@@ -115,7 +115,6 @@ class Uploader(ABC):
 
 
 class TxtUploader(Uploader):
-
   def upload_in_vector_store(self, file: Union['TxtFile', 'ImgFile', 'PdfFile'], docs: list[Document]) -> bool:
     if not isinstance(file, TxtFile):
       raise ValueError(
@@ -198,7 +197,7 @@ class ImgUploader(Uploader):
 
   def upload_in_bucket(self, file: Union['ImgFile', 'TxtFile', 'PdfFile'], docs: list[Document] | None = None) -> None:
     logger.debug(f"Inserting {file.metadata.fileName} in {self.bucket.name}")
-    
+
     if not isinstance(file, ImgFile):
       raise ValueError(
         f'Expected file of type ImgFile, got {type(file)}'

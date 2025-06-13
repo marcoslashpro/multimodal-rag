@@ -76,8 +76,5 @@ class Piper:
     logger.info(f"Upserting {self.file} and {docs} into Bucket")
     self.uploader.upload_in_bucket(self.file, docs)
 
-    logger.info(f"Upserting {self.file} and {docs} into DynamoDB")
-    self.uploader.upload_in_dynamo(self.file)
-
   def run_retrieval(self, query: str, namespace) -> list[Document]:
     return self._retriever_facory.get_retriever(self._vector_store_factory.get_vector_store(namespace)).invoke(query)
