@@ -13,6 +13,9 @@ if TYPE_CHECKING:
 from langchain_core.documents import Document
 
 from mm_rag.logging_service.log_config import create_logger
+from mm_rag.exceptions.models_exceptions import ObjectUpsertionError
+
+import asyncio
 
 
 logger = create_logger(__name__)
@@ -35,7 +38,7 @@ class Piper:
     self.embedder = embedder
     self._uploader_factory = uploader_factory
     self._processor_factory = processor_factory
-    self._retriever_facory = retriever_factory
+    self._retriever_factory = retriever_factory
     self._file_factory = file_factory
     self._ddb = dynamo
     self._vector_store_factory = vector_store_factory
@@ -57,7 +60,7 @@ class Piper:
         handler=self.img_handler
       )
 
-    self.retriever = self._retriever_facory.get_retriever(self._vector_store)
+    self.retriever = self._retriever_factory.get_retriever(self._vector_store)
 
     logger.debug(f"Inizitialized piper with:\nHandler: {self.img_handler}\nOwner: {namespace}\nEmbedder: {self.embedder}\n"
                  f"Bucket: {self._s3}\nDynamo: {self._ddb}, VectorStore: {self._vector_store}\nUploader: {self.uploader}"
@@ -76,5 +79,51 @@ class Piper:
     logger.info(f"Upserting {self.file} and {docs} into Bucket")
     self.uploader.upload_in_bucket(self.file, docs)
 
+
   def run_retrieval(self, query: str, namespace) -> list[Document]:
-    return self._retriever_facory.get_retriever(self._vector_store_factory.get_vector_store(namespace)).invoke(query)
+    return self._retriever_factory.get_retriever(self._vector_store_factory.get_vector_store(namespace)).invoke(query)
+
+  async def arun_upload(self, file_path: str, namespace: str) -> None:
+    self._lazy_init(file_path, namespace)
+    docs = self.processor.process(self.file)
+
+    vector_store_upload_task = None
+    bucket_upload_task = None
+
+    try:
+      async with asyncio.TaskGroup() as tg:
+        vector_store_upload_task = tg.create_task(self.uploader.aupload_in_vector_store(self.file, docs))
+        bucket_upload_task = tg.create_task(self.uploader.aupload_in_bucket(self.file, docs))
+
+    except* ObjectUpsertionError as upsertion_exception_group:
+      for e in upsertion_exception_group.exceptions:
+        assert isinstance(e, ObjectUpsertionError)
+
+        if e.storage == 'BucketService':
+          if (
+            vector_store_upload_task
+            and vector_store_upload_task.done()
+            and not vector_store_upload_task.cancelled()
+            and not vector_store_upload_task.exception()
+          ):
+            logger.warning(
+              "Upload failed in BucketService, rolling back successful VectorStore upload."
+            )
+            self._vector_store.remove_object(self.file.file_id)
+
+        elif e.storage == 'PineconeVectorStore':
+          if (
+            bucket_upload_task
+            and bucket_upload_task.done()
+            and not bucket_upload_task.cancelled()
+            and not bucket_upload_task.exception()
+          ):
+            logger.warning(
+              "Upload failed in VectorStore, rolling back successful Bucket upload."
+            )
+
+            self._s3.remove_object(self.file.file_id)
+
+        else:
+          logger.error(f"Unexpected error while uploading async in the databases: {str(e)}")
+          raise

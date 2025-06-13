@@ -69,7 +69,10 @@ class BucketService():
       )
     except ClientError as e:
       logger.error(e)
-      raise ObjectUpsertionError(f"Error while trying to put object {object_name} in the bucket {self.bucket.name}: {str(e)}")
+      raise ObjectUpsertionError(
+        storage='BucketService',
+        msg=f"Error while trying to put object {object_name} in the bucket {self.bucket.name}: {str(e)}"
+      ) from e 
 
     return True
 
@@ -89,7 +92,11 @@ class BucketService():
         object_key
       )
     except ClientError as e:
-      raise ObjectUpsertionError(f"Error while trying to put object {object_key} in the bucket {self.bucket.name}: {str(e)}")
+      raise ObjectUpsertionError(
+        storage="BucketService",
+        msg=f"Error while trying to put object {object_key} in the bucket {self.bucket.name}: {str(e)}"
+      ) from e 
+
     return True
 
   def copy_object(self, to_bucket: str, object_key: str, dest_obj_key: str | None = None) -> bool:
@@ -196,7 +203,7 @@ class BucketService():
       self.make_object_public(obj_key)
     except ClientError as e:
       print(f'Something went wrong while uploading the public object {object}: {str(e)}')
-      return False
+      raise ObjectUpsertionError(storage="BucketService", msg=f'Something went wrong while uploading the public object {object}: {str(e)}')
     return True
   
   def make_object_public(self, obj_key: str) -> str:

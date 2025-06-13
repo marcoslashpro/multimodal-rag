@@ -1,3 +1,6 @@
+from typing import Literal
+
+
 class MissingRegionError(Exception):
   """
   This exception is particularly useful for AWS ops.
@@ -12,8 +15,16 @@ class BucketAccessError(Exception):
 
 class ObjectUpsertionError(Exception):
   """
-  Raise this error anytime that there is a failure in the upsertion of an object into a storage.
+  Raise this error anytime that there is a failure in the upsertion of an object into a storage facility.
   """
+  def __init__(
+      self,
+      storage: Literal['BucketService', 'PineconeVectorStore'],
+      msg: str | None = None
+    ) -> None:
+    self.storage = storage
+    msg = msg or f'Failed to upsert into {self.storage}'
+    super().__init__(msg)
 
 class MissingItemError(Exception):
   def __init__(self, *args: object) -> None:

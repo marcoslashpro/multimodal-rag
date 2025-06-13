@@ -24,6 +24,8 @@ class DynamoDB:
         f"The table {table_name} does not exist and cannot be created"
       )
 
+    return getattr(self, table_name)
+
   @property
   def users(self):
     try:

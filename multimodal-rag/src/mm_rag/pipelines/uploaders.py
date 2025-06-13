@@ -9,6 +9,7 @@ if TYPE_CHECKING:
   from mm_rag.processing.handlers import ImgHandler
 
 import os
+import asyncio
 
 from abc import ABC, abstractmethod
 
@@ -20,6 +21,7 @@ import pinecone
 
 from mm_rag.processing.files import TxtFile, ImgFile, PdfFile
 from mm_rag.logging_service.log_config import create_logger
+from mm_rag.exceptions.models_exceptions import ObjectUpsertionError
 
 logger = create_logger(__name__)
 
@@ -112,6 +114,19 @@ class Uploader(ABC):
   def upload_in_dynamo(self, file: Union['TxtFile', 'ImgFile', 'PdfFile']) -> None:
     pass
 
+  async def aupload_in_vector_store(self, file: Union['TxtFile', 'ImgFile', 'PdfFile'], docs: list[Document]):
+    try:
+      return await asyncio.to_thread(self.upload_in_vector_store, file, docs)
+
+    except (AttributeError, ValueError, ObjectUpsertionError) as e:
+      raise ObjectUpsertionError("PineconeVectorStore") from e
+
+  async def aupload_in_bucket(self, file: Union['TxtFile', 'ImgFile', 'PdfFile'], docs: list[Document] | None = None):
+    try:
+      return await asyncio.to_thread(self.upload_in_bucket, file, docs)
+
+    except (AttributeError, ValueError, ObjectUpsertionError) as e:
+      raise ObjectUpsertionError("BucketService") from e
 
 
 class TxtUploader(Uploader):
@@ -123,14 +138,14 @@ class TxtUploader(Uploader):
 
     try:
       logger.debug(f"upserting docs of {file.file_path} to the VectorStore")
-      vector_store = self.vector_store.vector_store.add_documents(docs)
+      self.vector_store.vector_store.add_documents(docs)
 
       logger.debug("Done")
 
-    # TODO Improve Error Handling
     except pinecone.PineconeException as e:
       logger.error(e)
-      return False
+      raise ObjectUpsertionError('PineconeVectorStore') from e 
+
     return True
 
   def upload_in_bucket(self, file: Union['TxtFile', 'ImgFile', 'PdfFile'], docs: list[Document] | None = None) -> None:
@@ -148,7 +163,7 @@ class TxtUploader(Uploader):
         )
     except ClientError as e:
       logger.error(f"Error while upserting {file.metadata.fileName} in bucket {self.bucket.name}: {e}")
-      raise
+      raise ObjectUpsertionError('BucketService') from e 
 
     logger.debug("Done")
 
@@ -192,7 +207,8 @@ class ImgUploader(Uploader):
 
     except pinecone.PineconeException as e:
       logger.error("Error wile upserting the image %s to the VectorStore: %s" % file.file_path, e)
-      return False
+      raise ObjectUpsertionError('PineconeVectorStore') from e 
+
     return True
 
   def upload_in_bucket(self, file: Union['ImgFile', 'TxtFile', 'PdfFile'], docs: list[Document] | None = None) -> None:
@@ -210,9 +226,10 @@ class ImgUploader(Uploader):
         img_buffer,
         file.file_id
         )
+
     except ClientError as e:
       logger.error(f"Error while upserting {file.metadata.fileName} in bucket {self.bucket.name}: {e}")
-      raise
+      raise ObjectUpsertionError('BucketService') from e 
 
     logger.debug("Done")
 
@@ -258,9 +275,14 @@ class PdfUploader(Uploader):
           f"please provide valid ids in `docs`"
         )
 
-      logger.debug(f"Upserting {file.file_path} to the VectorStore")
-      self.vector_store.add_image(file.encodings[i], file.metadata, page_id)
-      logger.debug(f"Done.")
+      try:
+        logger.debug(f"Upserting {file.file_path} to the VectorStore")
+        self.vector_store.add_image(file.encodings[i], file.metadata, page_id)
+        logger.debug(f"Done.")
+
+      except pinecone.PineconeException as e:
+        logger.error("Error wile upserting the pdf page %d %s to the VectorStore: %s" % i, file.file_path, e)
+        raise ObjectUpsertionError('PineconeVectorStore') from e 
 
     logger.debug(f"All pages upserted.")
     return True
@@ -273,7 +295,7 @@ class PdfUploader(Uploader):
         f"Expected file of type PdfFile, got {type(file)}"
       )
     if not docs:
-      raise RuntimeError(
+      raise AttributeError(
         f"In order to upload PdfFile to the Bucket, please pass over the docs"
       )
 
@@ -295,7 +317,7 @@ class PdfUploader(Uploader):
         )
       except ClientError as e:
         logger.error(f"Error while upserting {file.metadata.fileName} in bucket {self.bucket.name}: {e}")
-        raise 
+        raise ObjectUpsertionError('BucketService') from e 
 
       logger.debug("Done")
 

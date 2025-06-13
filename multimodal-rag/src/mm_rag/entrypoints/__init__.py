@@ -11,7 +11,7 @@ from langchain_core.documents import Document
 logger = create_logger(__name__)
 
 
-def upload_file(file_input: str, namespace: str) -> None:
+async def upload_file(file_input: str, namespace: str) -> None:
   if not os.path.exists(file_input):
 
     logger.error(f"Provided file path: {file_input} does not exist")
@@ -19,7 +19,7 @@ def upload_file(file_input: str, namespace: str) -> None:
       f"Provided file path: {file_input} does not exist"
     )
 
-  setup.piper.run_upload(file_input, namespace)
+  await setup.piper.arun_upload(file_input, namespace)
 
 
 def query_vectorstore(query_input: str, namespace: str) -> list[Document]:

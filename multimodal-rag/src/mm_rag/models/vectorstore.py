@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.config.config import config
 from mm_rag.agents.mm_embedder import Embedder
+from mm_rag.exceptions.models_exceptions import ObjectUpsertionError
 if TYPE_CHECKING:
   from mm_rag.processing.base import Metadata
 
@@ -123,11 +124,14 @@ class PineconeVectorStore(VectorStoreFactory):
       )
     except pinecone.PineconeException as e:
       logger.error(e)
-      return False
+      raise ObjectUpsertionError("PineconeVectorStore") from e 
     return True
 
   def clean(self) -> None:
     self.vector_store.delete(delete_all=True)
+
+  def remove_object(self, id: str) -> None:
+    self.vector_store.delete([id], namespace=self.namespace)
 
 
 if __name__ == '__main__':

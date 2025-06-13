@@ -14,7 +14,7 @@ logger = create_logger(__name__)
 
 
 @upload_router.post("/upload-file/")
-def add_file(
+async def add_file(
     auth_pat: Annotated[HTTPAuthorizationCredentials, Depends(auth_pat_dependency)],
     file: UploadFile = File(...),
 ):
@@ -35,7 +35,7 @@ def add_file(
 
   try:
     logger.debug(f"Uploading file: {path}, with userId = {user.user_id}")
-    upload_file(path, user.user_id)
+    await upload_file(path, user.user_id)
 
   except FileNotFoundError as e:
     return {
