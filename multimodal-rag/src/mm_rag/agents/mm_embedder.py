@@ -40,10 +40,9 @@ class Embedder(Embeddings):
     request_body = json.dumps({
       "inputImage": base64_encoded_img
     })
-    logger.debug(f"Built request body to upload img: {request_body}")
 
     try:
-      logger.debug(f'Inoking the model for the response')
+      logger.debug(f'Invoking the model for the response')
       response = self.client.invoke_model(
         modelId=self.model_id,
         body = request_body

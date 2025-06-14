@@ -1,5 +1,6 @@
 import os
 from typing import Union
+import subprocess
 
 from PIL import Image
 from langchain_core.documents import Document
@@ -24,7 +25,7 @@ class ProcessorFactory:
       file_path: str,
       embedder: 'Embedder',
       img_handler: 'ImgHandler'
-      ) -> Union['TxtProcessor', 'PdfProcessor', 'ImgProcessor']:
+      ) -> Union['TxtProcessor', 'PdfProcessor', 'ImgProcessor', 'DocxProcessor']:
     processor = self.create_processor(file_path, embedder, img_handler)
     return processor
 
@@ -33,7 +34,7 @@ class ProcessorFactory:
       file_path: str,
       embedder: 'Embedder',
       img_handler: 'ImgHandler'
-      ) -> Union['TxtProcessor', 'PdfProcessor', 'ImgProcessor']:
+      ) -> Union['TxtProcessor', 'PdfProcessor', 'ImgProcessor', 'DocxProcessor']:
     _, file_type = os.path.splitext(file_path)
 
     if file_type == '.txt':
@@ -44,6 +45,9 @@ class ProcessorFactory:
 
     elif file_type in ['.png', '.jpeg', '.jpg']:
       return ImgProcessor(embedder, img_handler)
+
+    elif file_type == '.docx':
+      return DocxProcessor(embedder, img_handler)
 
     raise ValueError(
       f'File type {file_type} not yet supported.'
@@ -188,3 +192,39 @@ class PdfProcessor(Processor):
       )
 
     return docs
+
+class DocxProcessor(PdfProcessor):
+  def __init__(self, embedder: Embedder, handler: ImgHandler | None = None) -> None:
+    super().__init__(embedder, handler)
+    if not self.handler:
+      raise RuntimeError(
+        f"Please provide an ImgHandler for PdfProcessor"
+      )
+
+  def load_from_path(self, file_path: str) -> list[Image.Image]:
+
+    output_path, _ = os.path.splitext(file_path)
+    output_path += '.pdf'
+
+    result = subprocess.run(
+        [
+            'pandoc',
+            file_path,
+            '-o',
+            output_path,
+            '--pdf-engine=tectonic'
+        ],
+        cwd='/tmp/',
+        env={**os.environ, "HOME": "/tmp", "TMPDIR": "/tmp"},
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE
+    )
+
+    if result.returncode != 0:
+      logger.error(f'Pandoc Failed. Error: {result.stderr}')
+
+      raise FileNotFoundError(
+        f"Pandoc Failed while uploading {output_path}. Error: {result.stderr}, STDOUT: {result.stdout}, ErrorCode: {result.returncode}"
+      )
+
+    return super().load_from_path(output_path)

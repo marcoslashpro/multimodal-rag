@@ -1,13 +1,17 @@
 from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
-  from mm_rag.processing.processors import PdfProcessor, ImgProcessor, TxtProcessor
+  from mm_rag.processing.processors import PdfProcessor, ImgProcessor, TxtProcessor, DocxProcessor
   from mm_rag.processing.base import Metadata
 
-from mm_rag.processing.base import File
+from mm_rag.processing.base import File, Processor
+from mm_rag.logging_service.log_config import create_logger
 
 import os
 
 from PIL import Image
+
+
+logger = create_logger(__name__)
 
 
 class FileFactory:
@@ -15,8 +19,8 @@ class FileFactory:
       self,
       file_path: str,
       owner: str,
-      processor: Union['PdfProcessor', 'ImgProcessor', 'TxtProcessor']
-      ) -> Union['TxtFile', 'ImgFile', 'PdfFile']:
+      processor: Union['PdfProcessor', 'ImgProcessor', 'TxtProcessor', 'DocxProcessor']
+    ) -> Union['TxtFile', 'ImgFile', 'PdfFile', 'DocxFile']:
     file = self.create_file(file_path, owner, processor)
     return file
 
@@ -24,8 +28,8 @@ class FileFactory:
       self,
       file_path: str,
       owner: str,
-      processor: Union['PdfProcessor', 'ImgProcessor', 'TxtProcessor']
-      ) -> Union['TxtFile', 'ImgFile', 'PdfFile']:
+      processor: Union['PdfProcessor', 'ImgProcessor', 'TxtProcessor', 'DocxProcessor']
+    ) -> Union['TxtFile', 'ImgFile', 'PdfFile', 'DocxFile']:
     _, file_ext = os.path.splitext(file_path)
 
     if file_ext == '.txt':
@@ -36,6 +40,9 @@ class FileFactory:
 
     if file_ext in ['.jpeg', '.jpg', '.png']:
       return ImgFile(file_path, owner, processor)
+
+    if file_ext == '.docx':
+      return DocxFile(file_path, owner, processor)
 
     else:
       raise ValueError(
@@ -104,3 +111,7 @@ class PdfFile(File):
 
     return _encodings
 
+
+class DocxFile(PdfFile):
+  def __init__(self, file_path: str, owner: str, processor: Processor) -> None:
+    super().__init__(file_path, owner, processor)

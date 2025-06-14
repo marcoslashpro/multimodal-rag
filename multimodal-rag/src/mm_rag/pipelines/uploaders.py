@@ -62,7 +62,7 @@ class UploaderFactory:
         handler=handler
       )
 
-    if file_ext == '.pdf':
+    if file_ext in ['.pdf', '.docx']:
       return PdfUploader(
         dynamodb=dynamo,
         vector_store=vector_store,

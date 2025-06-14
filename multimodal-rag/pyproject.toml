@@ -23,6 +23,7 @@ dependencies = [
   'mangum',
   'uvicorn',
   'python-multipart',
+  'pandoc'
 ]
 version = '0.0.1'
 

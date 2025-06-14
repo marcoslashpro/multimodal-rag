@@ -2,13 +2,14 @@ from mm_rag.entrypoints import upload_file, query_vectorstore, run_chatbot, clea
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.entrypoints.setup import vlm, handler, bucket, retriever_factory, vector_store_factory
 
+import asyncio
 
 logger = create_logger(__name__)
 
-def add_file(user_id: str) -> None:
+async def add_file(user_id: str) -> None:
   file_input: str = input("Insert file path: ")
 
-  upload_file(file_input, namespace=user_id)
+  await upload_file(file_input, namespace=user_id)
 
 def query(user_id: str) -> None:
   query_input: str = input('Search: ')
@@ -24,14 +25,14 @@ def chat(user_id: str) -> None:
   query = input("You: ")
   run_chatbot(query, retriever, vlm, handler, bucket)
 
-def main() -> None:
+async def main() -> None:
   user_id: str = input("Enter your userId:")
   while True:
     choice: str = input("Search/Upload/Chat/Clean: ").lower()
     if choice == 'search':
       query(user_id=user_id)
     elif choice == 'upload':
-      add_file(user_id=user_id)
+      await add_file(user_id=user_id)
     elif choice == 'chat':
       chat(user_id=user_id)
     elif choice =='clean':
@@ -41,4 +42,4 @@ def main() -> None:
       quit()
 
 if __name__ == "__main__":
-  main()
+  asyncio.run(main())

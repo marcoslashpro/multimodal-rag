@@ -18,7 +18,6 @@ async def add_file(
     auth_pat: Annotated[HTTPAuthorizationCredentials, Depends(auth_pat_dependency)],
     file: UploadFile = File(...),
 ):
-  logger.info(f"Upload file route hit.")
   user = authorize(setup.dynamo, auth_pat.credentials)
 
   filename = file.filename
@@ -41,7 +40,7 @@ async def add_file(
     return {
       "status": 404,
       "error": {
-        "message": f"Generated file path: {path} from file: {file}, but we are not able to locate it on the cloud"
+        "message": f"Generated file path: {path} from file: {file}, but we are not able to locate it on the cloud, full error: {e}"
       },
     }
   except ValueError as e:

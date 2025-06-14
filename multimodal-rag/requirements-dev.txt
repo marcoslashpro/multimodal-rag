@@ -5,3 +5,4 @@ nose2
 moto
 reportlab
 pytest-mock
+python-docx

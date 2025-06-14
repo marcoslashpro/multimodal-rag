@@ -11,3 +11,4 @@ fastapi
 mangum
 uvicorn
 python-multipart
+pandoc
