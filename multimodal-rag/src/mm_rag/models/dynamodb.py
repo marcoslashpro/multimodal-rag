@@ -5,7 +5,7 @@ import boto3.dynamodb
 import boto3.dynamodb.conditions
 from botocore.exceptions import ClientError
 
-from mm_rag.exceptions.models_exceptions import MissingItemError
+from mm_rag.exceptions import MissingItemError
 from mm_rag.logging_service.log_config import create_logger
 
 

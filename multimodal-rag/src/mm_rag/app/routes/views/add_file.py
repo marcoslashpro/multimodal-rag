@@ -7,6 +7,7 @@ from mm_rag.logging_service.log_config import create_logger
 from mm_rag.entrypoints import upload_file, setup
 from mm_rag.app.dependencies import auth_pat_dependency, HTTPAuthorizationCredentials
 from mm_rag.app.utils import authorize
+from mm_rag.exceptions import FileNotValidError, DocGenerationError, ImageTooBigError, ObjectUpsertionError
 
 
 upload_router = APIRouter()
@@ -36,26 +37,26 @@ async def add_file(
     logger.debug(f"Uploading file: {path}, with userId = {user.user_id}")
     await upload_file(path, user.user_id)
 
-  except FileNotFoundError as e:
+  except (FileNotValidError, FileNotFoundError) as e:
     return {
       "status": 404,
       "error": {
-        "message": f"Generated file path: {path} from file: {file}, but we are not able to locate it on the cloud, full error: {e}"
+        "message": f"Invalid file {file.filename}. Full error: {e}"
       },
     }
-  except ValueError as e:
+  except (ValueError, ImageTooBigError, DocGenerationError, RuntimeError) as e:
     return {
       "status": 400,
       "error": {
         "message": f"A validation error occured while processing the file {file.filename}: {e}"
       },
     }
-  except RuntimeError as e:
+  except (ObjectUpsertionError, ExceptionGroup) as e:
     return {
-      "status": 400,
+      "status": 500,
       "error": {
-        "message": f"A error occured while processing the file {file.filename}: {e}"
-      },
+        "message": f"Error while uploading into {e.storage}. Upload in the other storage canceled."
+      }
     }
 
   return {

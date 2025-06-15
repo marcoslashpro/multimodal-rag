@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 
 from langchain_core.callbacks.manager import CallbackManagerForRetrieverRun
 
-from mm_rag.processing.handlers import ImgHandler
 from mm_rag.logging_service.log_config import create_logger
 
 from langchain_core.documents import Document
@@ -25,13 +24,11 @@ class RetrieverFactory:
     dynamo: 'DynamoDB',
     bucket: 'BucketService',
     embedder: 'Embedder',
-    handler: 'ImgHandler | None' = None,
     top_k: int = 3,
   ) -> None:
     self.dynamo = dynamo
     self.bucket = bucket
     self.embedder = embedder
-    self.handler = handler
     self.top_k = top_k
 
   def get_retriever(self, vector_store: 'PineconeVectorStore') -> 'Retriever':
@@ -40,7 +37,6 @@ class RetrieverFactory:
       self.dynamo,
       self.bucket,
       self.embedder,
-      self.handler,
       self.top_k
     )
 
@@ -52,7 +48,6 @@ class Retriever(BaseRetriever):
       dynamo: 'DynamoDB',
       bucket: 'BucketService',
       embedder: 'Embedder',
-      handler: 'ImgHandler | None' = None,
       top_k: int = 3
   ) -> None:
     super().__init__()
@@ -61,46 +56,6 @@ class Retriever(BaseRetriever):
     self._bucket = bucket
     self._top_k = top_k
     self._embedder = embedder
-    if handler:
-      self._handler = handler
-
-  def retrieve_and_display(self, query: str) -> None:
-    retrieved_docs = self.retrieve(query)
-
-    for doc in retrieved_docs:
-      logger.debug('Match for query: %s' % doc)
-      match_id = doc.id
-      if not match_id:
-        raise ValueError(
-          f"Found doc with no id field: {doc}"
-        )
-
-      metadata = doc.metadata
-      logger.debug(f"Found metadata for {match_id}")
-      if not metadata:
-        raise ValueError(
-          f"No metadata key found from the given matches in the response."
-        )
-
-      file_type = metadata.get('fileType')
-      logger.debug(F'File type for {match_id}: {file_type}')
-      if not file_type:
-        raise ValueError(
-          f"No Type key in the metadata of the response"
-        )
-
-      if file_type in ['.jpeg', '.png', '.jpg', '.pdf']:
-        if not self._handler:
-          raise ValueError(
-            f"Retrieved an Image match, in order to display it, plase pass a Handler to the class."
-          )
-
-        logger.debug(f"Calling the handler to display the Img: {match_id}")
-        self._handler.display(match_id, self._bucket)
-
-      else:
-        print(f"\n\n=====Chunk{match_id}=====\n")
-        print(doc.metadata.get('text') or doc.metadata.get('chunk_text'))
 
   def retrieve(self, query: str) -> list[Document]:
     logger.debug(f'Embedding query: {query}')

@@ -1,6 +1,6 @@
 from mm_rag.app.utils import authorize
 from mm_rag.models.dynamodb import DynamoDB
-from mm_rag.exceptions.models_exceptions import MissingItemError
+from mm_rag.exceptions import MissingItemError
 
 from fastapi import HTTPException
 

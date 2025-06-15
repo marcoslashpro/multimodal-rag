@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from botocore.exceptions import ClientError
 
 from mm_rag.models.dynamodb import DynamoDB
-from mm_rag.exceptions.models_exceptions import MissingItemError
+from mm_rag.exceptions import MissingItemError
 
 class TestDynamoDB(unittest.TestCase):
     def setUp(self):

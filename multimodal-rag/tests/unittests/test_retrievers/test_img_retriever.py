@@ -1,5 +1,4 @@
 from src.mm_rag.pipelines.retrievers import Retriever
-from src.mm_rag.processing.handlers import ImgHandler
 from src.mm_rag.models import dynamodb, vectorstore, s3bucket
 from src.mm_rag.agents.mm_embedder import Embedder
 
@@ -43,14 +42,12 @@ class TestImgRetrieveMethod(unittest.TestCase):
     self.mock_vector = MagicMock(vectorstore.PineconeVectorStore)
     self.mock_ddb = MagicMock(dynamodb.DynamoDB)
     self.mock_s3 = MagicMock(s3bucket.BucketService)
-    self.mock_handler = MagicMock(ImgHandler)
     self.mock_embedder = MagicMock(Embedder)
     self.retriever = Retriever(
       self.mock_vector,
       self.mock_ddb,
       self.mock_s3,
       self.mock_embedder,
-      self.mock_handler
     )
     self.retriever._vector_store.namespace = MagicMock(str)
     self.prop_response: list[Document] = [
@@ -73,7 +70,6 @@ class TestImgRetrieveMethod(unittest.TestCase):
     mock_response[0].metadata = prop_response['matches'][0].get('metadata')
 
     with patch('src.mm_rag.pipelines.retrievers.Retriever.retrieve', return_value=mock_response) as mock_retrieve,\
-        patch.object(self.retriever._handler, 'display', return_value=None) as mock_display,\
         patch.object(self.retriever._embedder, 'embed_query', return_value=[0.1, 0.2]):
         self.retriever.retrieve(mock_query)
 

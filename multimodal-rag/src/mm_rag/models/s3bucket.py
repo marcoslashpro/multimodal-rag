@@ -6,7 +6,7 @@ import io
 
 from mm_rag.config.config import config
 from mm_rag.logging_service.log_config import create_logger
-from mm_rag.exceptions.models_exceptions import MissingRegionError, BucketAccessError, ObjectUpsertionError
+from mm_rag.exceptions import MissingRegionError, BucketAccessError, ObjectUpsertionError
 
 
 logger = create_logger(__name__)
@@ -95,6 +95,18 @@ class BucketService():
       raise ObjectUpsertionError(
         storage="BucketService",
         msg=f"Error while trying to put object {object_key} in the bucket {self.bucket.name}: {str(e)}"
+      ) from e 
+
+    return True
+
+  def upload_object(self, key: str, body: str) -> bool:
+    try:
+      self.client.put_object(
+        Key=key, Body=body
+      )
+    except ClientError as e:
+      raise ObjectUpsertionError(
+        storage='BucketService'
       ) from e 
 
     return True

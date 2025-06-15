@@ -7,7 +7,7 @@ import unittest
 
 from mm_rag.models.vectorstore import PineconeVectorStore
 from mm_rag.agents.mm_embedder import Embedder
-from mm_rag.processing.base import Metadata
+from mm_rag.pipelines.datastructures import Metadata
 from mm_rag.config.config import config
 from mm_rag.utils import get_secret
 

@@ -1,61 +1,122 @@
-import os
-import pytest
-import pytest_asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+import unittest
+from unittest.mock import AsyncMock, MagicMock, patch, call
+import asyncio
 
-from mm_rag.pipelines.pipes import Piper
-from mm_rag.exceptions.models_exceptions import ObjectUpsertionError
-from mm_rag.models.vectorstore import PineconeVectorStore
+import mm_rag.pipelines.datastructures as ds
+from mm_rag.pipelines.pipes import pipe
+from mm_rag.exceptions import ObjectUpsertionError
 
+class DummyFile:
+    def __init__(self, file_id="id"):
+        self.metadata = MagicMock()
+        self.metadata.file_id = file_id
 
-@pytest_asyncio.fixture
-async def piper():
-    p = Piper(
-        MagicMock(), MagicMock(), MagicMock(), MagicMock(),
-        MagicMock(), MagicMock(), MagicMock(), MagicMock(), MagicMock()
-    )
-    yield p
+class DummyUploader:
+    def __init__(self, *a, **kw):
+        self.aupload_in_vector_store = AsyncMock()
+        self.aupload_in_bucket = AsyncMock()
+        self.remove_object = MagicMock()
 
+class DummyVectorStoreFactory:
+    def get_vector_store(self, auth):
+        return MagicMock()
 
-@pytest.fixture
-def mock_path(tmp_path):
-    file_path = tmp_path / "test.txt"
-    file_path.write_text("This is a test")
-    return str(file_path)
+class DummyBucket:
+    def remove_object(self, file_id):
+        pass
 
+class DummyVectorStore:
+    def remove_object(self, file_id):
+        pass
 
-@pytest.mark.asyncio
-async def test_arun_upload_rollback_vector_store_on_error(piper, mock_path):
-    mock_uploader = MagicMock()
-    mock_uploader.aupload_in_vector_store = AsyncMock(side_effect=ObjectUpsertionError("PineconeVectorStore"))
-    mock_uploader.aupload_in_bucket = AsyncMock()
+class DummyDynamoDB:
+    pass
 
-    with patch.object(piper._processor_factory, 'get_processor', return_value=MagicMock()) as mock_processor,\
-      patch.object(piper._file_factory, 'get_file', return_value=MagicMock()),\
-      patch.object(piper._vector_store_factory, 'get_vector_store', return_value=MagicMock()),\
-      patch.object(piper._uploader_factory, 'get_uploader', return_value=mock_uploader),\
-      patch.object(piper._s3, 'remove_object', return_value=None) as mock_remove,\
-      patch.object(piper._retriever_factory, 'get_retriever', return_value=MagicMock()):
+class DummyExtractor:
+    def extract(self, path, auth):
+        return DummyFile(file_id="fileid")
 
-        await piper.arun_upload(mock_path, 'mockUser')
+class TestPipe(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.dynamo = DummyDynamoDB()
+        self.vectorstore_factory = DummyVectorStoreFactory()
+        self.bucket = DummyBucket()
+        self.auth = "user1"
 
-        mock_remove.assert_called_once()
+    @patch("mm_rag.pipelines.pipes.TxtExtractor", DummyExtractor)
+    @patch("mm_rag.pipelines.pipes.TxtUploader", DummyUploader)
+    async def test_pipe_txt_success(self):
+        path = "foo.txt"
+        await pipe(path, self.auth, self.dynamo, self.vectorstore_factory, self.bucket)
 
+    @patch("mm_rag.pipelines.pipes.ImgExtractor", DummyExtractor)
+    @patch("mm_rag.pipelines.pipes.ImgUploader", DummyUploader)
+    async def test_pipe_img_success(self):
+        for ext in [".jpeg", ".jpg", ".png"]:
+            path = "foo" + ext
+            await pipe(path, self.auth, self.dynamo, self.vectorstore_factory, self.bucket)
 
-@pytest.mark.asyncio
-async def test_arun_upload_rollback_bucket_on_error(piper, mock_path):
-    mock_vector_store_instance = MagicMock()
-    mock_uploader = MagicMock()
-    mock_uploader.aupload_in_vector_store = AsyncMock()
-    mock_uploader.aupload_in_bucket = AsyncMock(side_effect=ObjectUpsertionError("BucketService"))
+    @patch("mm_rag.pipelines.pipes.PdfExtractor", DummyExtractor)
+    @patch("mm_rag.pipelines.pipes.PdfUploader", DummyUploader)
+    async def test_pipe_pdf_success(self):
+        path = "foo.pdf"
+        await pipe(path, self.auth, self.dynamo, self.vectorstore_factory, self.bucket)
 
-    with patch.object(piper._processor_factory, 'get_processor', return_value=MagicMock()),\
-         patch.object(piper._file_factory, 'get_file', return_value=MagicMock()),\
-         patch.object(piper._vector_store_factory, 'get_vector_store', return_value=mock_vector_store_instance),\
-         patch.object(piper._uploader_factory, 'get_uploader', return_value=mock_uploader),\
-         patch.object(mock_vector_store_instance, 'remove_object', return_value=None) as mock_remove,\
-         patch.object(piper._retriever_factory, 'get_retriever', return_value=MagicMock()):
+    @patch("mm_rag.pipelines.pipes.DocExtractor", DummyExtractor)
+    @patch("mm_rag.pipelines.pipes.PdfUploader", DummyUploader)
+    async def test_pipe_docx_success(self):
+        path = "foo.docx"
+        await pipe(path, self.auth, self.dynamo, self.vectorstore_factory, self.bucket)
 
-        await piper.arun_upload(mock_path, 'mockUser')
+    @patch("mm_rag.pipelines.pipes.TxtExtractor", DummyExtractor)
+    @patch("mm_rag.pipelines.pipes.TxtUploader", DummyUploader)
+    async def test_pipe_vectorstore_upload_error(self):
+        path = "foo.txt"
+        # Simulate vectorstore upload error
+        uploader = DummyUploader()
+        uploader.aupload_in_vector_store = AsyncMock(side_effect=ObjectUpsertionError(storage="PineconeVectorStore"))
+        uploader.aupload_in_bucket = AsyncMock()
+        with patch("mm_rag.pipelines.pipes.TxtUploader", return_value=uploader), \
+             patch("mm_rag.pipelines.pipes.TxtExtractor", DummyExtractor), \
+             patch("mm_rag.pipelines.pipes.vectorstore.VectorStoreFactory.get_vector_store", return_value=DummyVectorStore()), \
+             patch("mm_rag.pipelines.pipes.s3bucket", DummyBucket()):
+            with self.assertRaises(ObjectUpsertionError):
+                await pipe(path, self.auth, self.dynamo, self.vectorstore_factory, self.bucket)
 
-        mock_remove.assert_called_once()
+    @patch("mm_rag.pipelines.pipes.TxtExtractor", DummyExtractor)
+    @patch("mm_rag.pipelines.pipes.TxtUploader", DummyUploader)
+    async def test_pipe_bucket_upload_error(self):
+        path = "foo.txt"
+        # Simulate bucket upload error
+        uploader = DummyUploader()
+        uploader.aupload_in_vector_store = AsyncMock()
+        uploader.aupload_in_bucket = AsyncMock(side_effect=ObjectUpsertionError(storage="BucketService"))
+        with patch("mm_rag.pipelines.pipes.TxtUploader", return_value=uploader), \
+             patch("mm_rag.pipelines.pipes.TxtExtractor", DummyExtractor), \
+             patch("mm_rag.pipelines.pipes.vectorstore.VectorStoreFactory.get_vector_store", return_value=DummyVectorStore()), \
+             patch("mm_rag.pipelines.pipes.s3bucket", DummyBucket()):
+            with self.assertRaises(ObjectUpsertionError):
+                await pipe(path, self.auth, self.dynamo, self.vectorstore_factory, self.bucket)
+
+    async def test_pipe_unsupported_file_type(self):
+        path = "foo.unsupported"
+        with patch("mm_rag.pipelines.pipes.ds.FileType", side_effect=ValueError("unsupported")):
+            with self.assertRaises(ValueError):
+                await pipe(path, self.auth, self.dynamo, self.vectorstore_factory, self.bucket)
+
+    @patch("mm_rag.pipelines.pipes.TxtExtractor", DummyExtractor)
+    @patch("mm_rag.pipelines.pipes.TxtUploader", DummyUploader)
+    async def test_pipe_unexpected_exception(self):
+        path = "foo.txt"
+        uploader = DummyUploader()
+        uploader.aupload_in_vector_store = AsyncMock(side_effect=ExceptionGroup("unexpected", [RuntimeError()]))
+        uploader.aupload_in_bucket = AsyncMock()
+        with patch("mm_rag.pipelines.pipes.TxtUploader", return_value=uploader), \
+             patch("mm_rag.pipelines.pipes.TxtExtractor", DummyExtractor), \
+             patch("mm_rag.pipelines.pipes.vectorstore.VectorStoreFactory.get_vector_store", return_value=DummyVectorStore()), \
+             patch("mm_rag.pipelines.pipes.s3bucket", DummyBucket()):
+            with self.assertRaises(ExceptionGroup):
+                await pipe(path, self.auth, self.dynamo, self.vectorstore_factory, self.bucket)
+
+if __name__ == "__main__":
+    unittest.main()
