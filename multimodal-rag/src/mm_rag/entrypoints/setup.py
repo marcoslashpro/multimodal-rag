@@ -2,7 +2,6 @@ from mm_rag.models import vectorstore, s3bucket, dynamodb
 from mm_rag.config.config import config
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.agents.mm_embedder import Embedder
-from mm_rag.processing.handlers import ImgHandler
 from mm_rag.pipelines.retrievers import RetrieverFactory
 from mm_rag.pipelines.pipes import pipe
 from mm_rag.agents.vlm import VLM
@@ -25,7 +24,6 @@ bucket = s3bucket.BucketService(s3bucket.create_bucket(
   config['aws']['bucketname']
 ))
 dynamo = dynamodb.DynamoDB()
-handler = ImgHandler()
 embedder = Embedder()
 retriever_factory = RetrieverFactory(
   dynamo, bucket, embedder

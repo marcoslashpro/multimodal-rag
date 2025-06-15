@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.entrypoints import run_chatbot
-from mm_rag.entrypoints.setup import vlm, handler, bucket, dynamo, retriever_factory, vector_store_factory
+from mm_rag.entrypoints.setup import vlm, bucket, dynamo, retriever_factory, vector_store_factory
 from mm_rag.app.dependencies import auth_pat_dependency, HTTPAuthorizationCredentials
 from mm_rag.app.utils import authorize
 
@@ -28,7 +28,6 @@ def chat(chat_input: ChatInput, auth_pat: Annotated[HTTPAuthorizationCredentials
     chat_input.query,
     retriever_factory.get_retriever(vector_store_factory.get_vector_store(user.user_id)),
     vlm,
-    handler,
     bucket
   )
 

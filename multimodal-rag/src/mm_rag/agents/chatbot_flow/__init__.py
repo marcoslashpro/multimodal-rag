@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, Annotated, Literal
 
 from mm_rag.pipelines.retrievers import Retriever
-from mm_rag.processing.handlers import ImgHandler
 from mm_rag.models.s3bucket import BucketService
 from mm_rag.agents.vlm import VLM
 
@@ -26,7 +25,6 @@ class State(TypedDict):
   retriever: Retriever
   vlm: VLM
   retrieved: list[Document] | None
-  img_handler: ImgHandler
   bucket: BucketService
   query: str
 
@@ -55,13 +53,12 @@ builder.add_edge("format", "chatbot")
 graph = builder.compile()
 
 
-def run_chatbot(query: str, retriever: 'Retriever', vlm: 'VLM', img_handler: 'ImgHandler', bucket: 'BucketService'):
+def run_chatbot(query: str, retriever: 'Retriever', vlm: 'VLM', bucket: 'BucketService'):
   state = {
     "messages": [],
     "is_retrieve_required": None,
     'retriever': retriever,
     'vlm': vlm,
-    'img_handler': img_handler,
     'bucket': bucket,
     'retrieved': None,
     'query': query

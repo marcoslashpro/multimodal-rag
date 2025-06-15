@@ -23,7 +23,7 @@ class Extractor(ABC):
         path = self._validate_path(path)
 
         metadata = self._extract_metadata(path, auth)
-        content = self._extract_content(path, metadata)
+        content = self._extract_content(path)
         docs = self._extract_docs(content, metadata)
 
         return ds.File(
@@ -212,8 +212,8 @@ class DocExtractor(Extractor):
 
     def _extract_docs(self, content: list[Image.Image], metadata: ds.Metadata) -> list[Document]:
         processed_pages = [utils.process_img(page) for page in content]
-
         ids = utils._generate_ids(metadata.file_id, len(processed_pages))
+
         docs = utils.generate_docs(ids, processed_pages, metadata)
 
         return docs
