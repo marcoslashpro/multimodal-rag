@@ -7,6 +7,7 @@ from typing import Union
 from PIL import Image
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from mm_rag.pipelines.datastructures import Path, UserId
 from pdf2image import convert_from_path
 
 from mm_rag.exceptions import FileNotValidError, ImageTooBigError
@@ -85,135 +86,138 @@ class Extractor(ABC):
 
 
 class TxtExtractor(Extractor):
-    def __init__(self, chunk_size: int = 500, chunk_overlap: int = 100):
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
+  def __init__(self, chunk_size: int = 500, chunk_overlap: int = 100):
+    self.chunk_size = chunk_size
+    self.chunk_overlap = chunk_overlap
 
-    def _extract_metadata(self, path: ds.Path, auth: ds.UserId) -> ds.Metadata:
-        return super()._extract_metadata(path, auth)
+  def _extract_metadata(self, path: ds.Path, auth: ds.UserId) -> ds.Metadata:
+    return super()._extract_metadata(path, auth)
 
-    def _extract_content(self, path: ds.Path) -> str:
-        with open(path, 'r', encoding='utf-8') as file:
-            return file.read()
+  def _extract_content(self, path: ds.Path) -> str:
+    with open(path, 'r', encoding='utf-8') as file:
+      return file.read()
 
-    def _extract_docs(self, content: str, metadata: ds.Metadata) -> list[Document]:
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap
-        )
+  def _extract_docs(self, content: str, metadata: ds.Metadata) -> list[Document]:
+    splitter = RecursiveCharacterTextSplitter(
+      chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap
+    )
 
-        splits = splitter.split_text(content)
-        ids = utils._generate_ids(metadata.file_id, len(splits))
-        docs = utils.generate_docs(ids, splits, metadata)
+    splits = splitter.split_text(content)
+    ids = utils._generate_ids(metadata.file_id, len(splits))
+    docs = utils.generate_docs(ids, splits, metadata)
 
-        return docs
+    return docs
 
 
 class ImgExtractor(Extractor):
-    def _extract_metadata(self, path: ds.Path, auth: ds.UserId) -> ds.Metadata:
-        return super()._extract_metadata(path, auth)
+  def _extract_metadata(self, path: ds.Path, auth: ds.UserId) -> ds.Metadata:
+    return super()._extract_metadata(path, auth)
 
-    def _extract_content(self, path: ds.Path) -> Image.Image:
-        try:
-            return Image.open(path).convert("RGB")
+  def _extract_content(self, path: ds.Path) -> Image.Image:
+    try:
+      return Image.open(path).convert("RGB")
 
-        except Image.DecompressionBombError as e:
-            logger.error(f"The given image {path} cannot be open as the size is too big.")
-            raise ImageTooBigError(
-                f"The given image {path} cannot be open as the size is too big."
-            )
+    except Image.DecompressionBombError as e:
+      logger.error(f"The given image {path} cannot be open as the size is too big.")
+      raise ImageTooBigError(
+        f"The given image {path} cannot be open as the size is too big."
+      )
 
-    def _extract_docs(self, content: Image.Image, metadata: ds.Metadata) -> list[Document]:
-        processed_img = utils.process_img(content)
+  def _extract_docs(self, content: Image.Image, metadata: ds.Metadata) -> list[Document]:
+    processed_img = utils.process_img(content)
 
-        docs: list[Document] = [
-            Document(
-                page_content=processed_img,
-                metadata=asdict(metadata),
-                id=metadata.file_id
-            )
-        ]
+    docs: list[Document] = [
+      Document(
+        page_content=processed_img,
+        metadata=asdict(metadata),
+        id=metadata.file_id
+      )
+    ]
 
-        return docs
+    return docs
 
 
 class PdfExtractor(Extractor):
-    def _extract_metadata(self, path: ds.Path, auth: ds.UserId) -> ds.Metadata:
-        return super()._extract_metadata(path, auth)
+  def _extract_metadata(self, path: ds.Path, auth: ds.UserId) -> ds.Metadata:
+    return super()._extract_metadata(path, auth)
 
-    def _extract_content(self, path: ds.Path) -> list[Image.Image]:
-        pages: list[Image.Image] = []
+  def _extract_content(self, path: ds.Path) -> list[Image.Image]:
+    pages: list[Image.Image] = []
 
-        for i, page in enumerate(convert_from_path(path)):
-            try:
-                pages.append(page.convert("RGB"))
+    for i, page in enumerate(convert_from_path(path)):
+      try:
+        pages.append(page.convert("RGB"))
 
-            # TODO: Skip only one page, instead of stopping the processing
-            except Image.DecompressionBombError:
-                logger.error(f"Stopping pdf extraction pipeline since page {i} is too big to process")
-                raise ImageTooBigError(
-                    f"Stopping pdf extraction pipeline since page {i} is too big to process"
-                )
-        return pages
+      # TODO: Skip only one page, instead of stopping the processing
+      except Image.DecompressionBombError:
+        logger.error(f"Stopping pdf extraction pipeline since page {i} is too big to process")
+        raise ImageTooBigError(
+          f"Stopping pdf extraction pipeline since page {i} is too big to process"
+        )
+    return pages
 
-    def _extract_docs(self, content: list[Image.Image], metadata: ds.Metadata) -> list[Document]:
-        processed_pages = [utils.process_img(page) for page in content]
+  def _extract_docs(self, content: list[Image.Image], metadata: ds.Metadata) -> list[Document]:
+    processed_pages = [utils.process_img(page) for page in content]
 
-        ids = utils._generate_ids(metadata.file_id, len(processed_pages))
-        docs = utils.generate_docs(ids, processed_pages, metadata)
+    ids = utils._generate_ids(metadata.file_id, len(processed_pages))
+    docs = utils.generate_docs(ids, processed_pages, metadata)
 
-        return docs
+    return docs
 
 
 class DocExtractor(Extractor):
-    def _extract_metadata(self, path: ds.Path, auth: ds.UserId) -> ds.Metadata:
-        return super()._extract_metadata(path, auth)
+  def _extract_metadata(self, path: ds.Path, auth: ds.UserId) -> ds.Metadata:
+    return super()._extract_metadata(path, auth)
 
-    def _extract_content(self, path: ds.Path) -> list[Image.Image]:
-        output_path, _ = os.path.splitext(path)
-        output_path += '.pdf'
+  def _extract_content(self, path: ds.Path) -> list[Image.Image]:
+    output_path, _ = os.path.splitext(path)
+    output_path += '.pdf'
 
-        result = subprocess.run(
-            [
-                'pandoc',
-                path,
-                '-o',
-                output_path,
-                '--pdf-engine=tectonic'
-            ],
-            # !!CLOUD COMPATIBLE SETTINGS!!
-            # !!TURN ON FOR DEPLOYMENT!!
-            cwd='/tmp/',
-            env={**os.environ, "HOME": "/tmp", "TMPDIR": "/tmp"},
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE
+    self.convert_docx_to_pdf(path, output_path)
+
+    pages: list[Image.Image] = []
+
+    for i, page in enumerate(convert_from_path(output_path)):
+      try:
+        pages.append(page.convert("RGB"))
+
+      # TODO: Skip only one page, instead of stopping the processing
+      except Image.DecompressionBombError:
+        logger.error(f"Stopping pdf extraction pipeline since page {i} is too big to process")
+        raise ImageTooBigError(
+          f"Stopping pdf extraction pipeline since page {i} is too big to process"
         )
 
-        if result.returncode != 0:
-            logger.error(
-                f'Pandoc Failed while uploading {output_path}. Error: {result.stderr}, STDOUT: {result.stdout}, ErrorCode: {result.returncode}')
+    return pages
 
-            raise FileNotValidError(
-                f"Pandoc Failed while uploading {output_path}. Error: {result.stderr}, STDOUT: {result.stdout}, ErrorCode: {result.returncode}"
-            )
+  def _extract_docs(self, content: list[Image.Image], metadata: ds.Metadata) -> list[Document]:
+    processed_pages = [utils.process_img(page) for page in content]
+    ids = utils._generate_ids(metadata.file_id, len(processed_pages))
 
-        pages: list[Image.Image] = []
+    docs = utils.generate_docs(ids, processed_pages, metadata)
 
-        for i, page in enumerate(convert_from_path(output_path)):
-            try:
-                pages.append(page.convert("RGB"))
+    return docs
 
-            # TODO: Skip only one page, instead of stopping the processing
-            except Image.DecompressionBombError:
-                logger.error(f"Stopping pdf extraction pipeline since page {i} is too big to process")
-                raise ImageTooBigError(
-                    f"Stopping pdf extraction pipeline since page {i} is too big to process"
-                )
-        return pages
+  def convert_docx_to_pdf(self, input_path: str, output_path: str) -> None:
+    result = subprocess.run(
+      [
+        'pandoc',
+        input_path,
+        '-o',
+        output_path,
+        '--pdf-engine=tectonic'
+      ],
+      # !!CLOUD COMPATIBLE SETTINGS!!
+      # !!TURN ON FOR DEPLOYMENT!!
+      cwd='/tmp/',
+      env={**os.environ, "HOME": "/tmp", "TMPDIR": "/tmp"},
+      stderr=subprocess.PIPE,
+      stdout=subprocess.PIPE
+    )
 
-    def _extract_docs(self, content: list[Image.Image], metadata: ds.Metadata) -> list[Document]:
-        processed_pages = [utils.process_img(page) for page in content]
-        ids = utils._generate_ids(metadata.file_id, len(processed_pages))
-
-        docs = utils.generate_docs(ids, processed_pages, metadata)
-
-        return docs
+    if result.returncode != 0:
+      logger.error(
+      f'Pandoc Failed while uploading {output_path}. Error: {result.stderr}, STDOUT: {result.stdout}, ErrorCode: {result.returncode}')
+      raise FileNotValidError(
+        f"Pandoc Failed while uploading {output_path}. Error: {result.stderr}, STDOUT: {result.stdout}, ErrorCode: {result.returncode}"
+      )

@@ -28,15 +28,14 @@ async def pipe(
     ds.FileType.PNG: (ImgExtractor, ImgUploader),
     ds.FileType.JPG: (ImgExtractor, ImgUploader),
     ds.FileType.PDF: (PdfExtractor, PdfUploader),
-    ds.FileType.DOCX: (DocExtractor, PdfUploader)
+    ds.FileType.DOCX: (DocExtractor, PdfUploader),
   }
-
   file_type = ds.FileType(os.path.splitext(path)[-1])
 
-  extractor, uploader = _map[file_type]
-  extractor = extractor()
+  extractor_cls, uploader_cls = _map[file_type]
+  extractor = extractor_cls()
   vectorstore = vectorstore_factory.get_vector_store(auth)
-  uploader = uploader(dynamo, vectorstore, bucket)
+  uploader = uploader_cls(dynamo, vectorstore, bucket)
 
   file = extractor.extract(path, auth)
 
