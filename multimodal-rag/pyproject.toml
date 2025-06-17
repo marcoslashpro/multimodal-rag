@@ -1,38 +1,78 @@
-[build-system]
-requires = ['setuptools', 'setuptools-scm']
-build-backend = 'setuptools.build_meta'
-
-
 [project]
-name = 'mm_rag'
-authors = [
-	{name='Marco Tambasco', email='tambascomarco35@gmail.com'}
-]
-requires-python = '>=3.11'
+name = "multimodal-rag"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
 dependencies = [
-  'langchain',
-  'langgraph',
-  'langchain-pinecone',
-  'langchain-huggingface',
-  'boto3',
-  'pillow',
-  'pdf2image',
-  'python-dotenv',
-  'pinecone',
-  'fastapi',
-  'mangum',
-  'uvicorn',
-  'python-multipart',
-  'pandoc'
+    "awslambdaric>=3.1.1",
+    "boto3>=1.38.37",
+    "fastapi>=0.115.13",
+    "langchain>=0.3.25",
+    "langchain-huggingface>=0.3.0",
+    "langchain-pinecone>=0.2.8",
+    "langgraph>=0.4.8",
+    "mangum>=0.19.0",
+    "pandoc>=2.4",
+    "pdf2image>=1.17.0",
+    "pillow>=11.2.1",
+    "pinecone>=7.1.0",
+    "python-dotenv>=1.1.0",
+    "python-multipart>=0.0.20",
+    "uvicorn>=0.34.3",
 ]
-version = '0.0.1'
 
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "moto>=5.1.6",
+    "nose2>=0.15.1",
+    "pytest-mock>=3.14.1",
+    "python-docx>=1.2.0",
+    "reportlab>=4.4.1",
+]
 
-[tool.setuptools]
-package-dir = {"" = "src"}
+[tool.uv]
+package = true
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.uv.sources]
+multimodal-rag = { workspace = true }
 
-[project.scripts]
-launch-cli = "mm_rag.cli_entrypoints.main:main"
+[tool.pytest.ini_options]
+addopts = '--cov=src'
+testpaths = [
+    'tests'
+]
+
+[tool.tox]
+env_list = [
+    "mypy",
+    "tests"
+]
+isolated_build = true
+
+[tool.tox.gh-actions]
+python = '3.12: py312'
+
+[tool.tox.env.tests]
+deps = [
+    "httpx>=0.28.1",
+    "moto>=5.1.6",
+    "nose2>=0.15.1",
+    "pytest-mock>=3.14.1",
+    "python-docx>=1.2.0",
+    "reportlab>=4.4.1",
+]
+commands = [
+    [
+        "pytest", { replace = "posargs", default = ["tests"], extend = true }
+    ]
+]
+
+[tool.tox.env.mypy]
+deps = ["mypy"]
+commands = [
+    [
+        "mypy", { replace = "posargs", default = ["src"], extend = true}
+    ]
+]

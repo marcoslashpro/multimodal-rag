@@ -1,22 +1,18 @@
 import hashlib
-import secrets
 
-from mm_rag.app import lambda_dir
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.exceptions import MissingItemError
 from mm_rag.models.dynamodb import DynamoDB
 
-from fastapi import UploadFile, HTTPException, Response
+from fastapi import HTTPException
 
 from pydantic import BaseModel, ValidationError
 
-from botocore.exceptions import ClientError
-
-import shutil
 import os
 
 
 logger = create_logger(__name__)
+lambda_dir = '/tmp/'
 
 
 def write_file_to_lambda_path(file: bytes, filename: str) -> str:

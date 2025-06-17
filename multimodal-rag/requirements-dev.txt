@@ -1,8 +1,0 @@
--r requirements.txt
-
-httpx
-nose2
-moto
-reportlab
-pytest-mock
-python-docx

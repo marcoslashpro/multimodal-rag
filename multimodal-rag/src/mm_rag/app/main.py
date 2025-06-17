@@ -31,7 +31,3 @@ async def root():
       "message": "multi-modal RAG"
     }
   }
-
-
-if __name__ == "__main__":
-  uvicorn.run(app)

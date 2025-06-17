@@ -1,6 +1,6 @@
 from mm_rag.entrypoints import upload_file, query_vectorstore, run_chatbot, cleanup
 from mm_rag.logging_service.log_config import create_logger
-from mm_rag.entrypoints.setup import vlm, handler, bucket, retriever_factory, vector_store_factory
+from mm_rag.entrypoints.setup import vlm, bucket, retriever_factory, vector_store_factory
 
 import asyncio
 
@@ -22,8 +22,8 @@ def query(user_id: str) -> None:
 
 def chat(user_id: str) -> None:
   retriever = retriever_factory.get_retriever(vector_store=vector_store_factory.get_vector_store(namespace=user_id))
-  query = input("You: ")
-  run_chatbot(query, retriever, vlm, handler, bucket)
+  chat_query = input("You: ")
+  run_chatbot(chat_query, retriever, vlm, bucket)
 
 async def main() -> None:
   user_id: str = input("Enter your userId:")
@@ -42,4 +42,4 @@ async def main() -> None:
       quit()
 
 if __name__ == "__main__":
-  asyncio.run(main())
+  asyncio.run(main)

@@ -2,11 +2,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 
-from mm_rag.app.utils import write_file_to_lambda_path
+from mm_rag.app.utils import write_file_to_lambda_path,authorize
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.entrypoints import upload_file, setup
 from mm_rag.app.dependencies import auth_pat_dependency, HTTPAuthorizationCredentials
-from mm_rag.app.utils import authorize
 from mm_rag.exceptions import FileNotValidError, DocGenerationError, ImageTooBigError, ObjectUpsertionError
 
 

@@ -21,7 +21,7 @@ class MmRagDeployStack(Stack):
 
         docker_func = lambda_.DockerImageFunction(
             self, "FastAPIDockerDeploy",
-            code=lambda_.DockerImageCode.from_image_asset("./multimodal-rag"),
+            code=lambda_.DockerImageCode.from_image_asset("../multimodal-rag"),
             timeout=Duration.seconds(120),
             memory_size=1024
         )
