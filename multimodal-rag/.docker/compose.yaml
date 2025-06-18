@@ -6,7 +6,7 @@ services:
     container_name: mm-rag-dev
     command: uvicorn mm_rag.app.main:app --host 0.0.0.0 --port 8080 --reload
 
-    image: mm-rag-dev:latest
+    image: mm-rag:test
 
     ports:
       - "8080:8080"

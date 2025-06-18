@@ -4,6 +4,7 @@ from aws_cdk import (
     aws_lambda as lambda_,
     CfnOutput,
     aws_iam as iam,
+    pipelines
 )
 from aws_cdk.aws_apigatewayv2_alpha import (
     CorsHttpMethod,
@@ -13,6 +14,7 @@ from aws_cdk.aws_apigatewayv2_alpha import (
 )
 from aws_cdk.aws_apigatewayv2_integrations_alpha import HttpLambdaIntegration
 from constructs import Construct
+from pathlib import Path
 
 class MmRagDeployStack(Stack):
 
@@ -21,7 +23,7 @@ class MmRagDeployStack(Stack):
 
         docker_func = lambda_.DockerImageFunction(
             self, "FastAPIDockerDeploy",
-            code=lambda_.DockerImageCode.from_image_asset("../multimodal-rag"),
+            code=lambda_.DockerImageCode.from_image_asset(str(Path(__file__).parent.parent / "multimodal-rag/.docker/")),
             timeout=Duration.seconds(120),
             memory_size=1024
         )

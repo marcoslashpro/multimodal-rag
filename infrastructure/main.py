@@ -1,5 +1,5 @@
 def main():
-    print("Hello from cdk!")
+    print("Hello from infrastructure!")
 
 
 if __name__ == "__main__":

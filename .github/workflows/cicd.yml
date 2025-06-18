@@ -1,0 +1,48 @@
+name: cicd.yml
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: build the test image
+        working-directory: ./multimodal-rag/
+        run: |
+          docker compose .docker/compose.yaml build
+
+      - name: save image
+        run: |
+          docker save mm-rag:test -o image.tar
+
+      - name: upload test image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-image
+          path: /image.tar
+
+  test:
+    needs: build-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Load the test-container
+        uses: actions/download-artifact@v4
+        with:
+          name: test-container
+          path: /image.tar
+
+      - name: Spin up test-container
+        run: |
+          docker load --input /image.tar
+
+      - name: Run tests
+        working-directory: ./multimodal-rag/
+        run: |
+          docker compose -f .docker/compose.yaml up
