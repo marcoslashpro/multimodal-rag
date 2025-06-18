@@ -15,7 +15,7 @@ jobs:
       - name: build the test image
         working-directory: ./multimodal-rag/
         run: |
-          docker compose .docker/compose.yaml build
+          docker compose -f .docker/compose.yaml build
 
       - name: save image
         run: |
