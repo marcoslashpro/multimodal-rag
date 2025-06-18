@@ -4,7 +4,24 @@ on:
     branches:
       - main
 
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
 jobs:
+
+  setup-credentials:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Prepare AWS credentials
+        run: |
+          mkdir -p ~/.aws
+          echo "[default]" > ~/.aws/credentials
+          echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+          echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+  
 
   build-test:
     runs-on: ubuntu-latest
@@ -22,20 +39,15 @@ jobs:
           docker save mm-rag:test -o ${{ runner.temp }}/image.tar
 
       - name: upload test image artifact
-
         uses: actions/upload-artifact@v4
         with:
           name: mm-rag-test
           path: ${{ runner.temp }}
 
+
   test:
     needs: build-test
     runs-on: ubuntu-latest
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: ${{ secrets.AWS_DEFACULT_REGION }}
-
 
     steps:
       - uses: actions/checkout@v2
@@ -46,13 +58,6 @@ jobs:
           name: mm-rag-test
           path: ${{ runner.temp }}
 
-      - name: Prepare AWS credentials
-        run: |
-          mkdir -p ~/.aws
-          echo "[default]" > ~/.aws/credentials
-          echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
-          echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
-
       - name: Spin up test-container
         run: |
           docker load --input ${{ runner.temp }}/image.tar
@@ -61,3 +66,22 @@ jobs:
         working-directory: ./multimodal-rag/
         run: |
           docker compose -f ./.docker/compose.yaml up
+          
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        working-directory: ./multimodal-rag/
+        run: |
+          pip3 install -r infrastructure/pyproject.toml
+          sudo npm i -g aws-cdk
+
+      - name: Deploy
+        working-directory: ./multimodal-rag/
+        run: |
+          cdk deploy
