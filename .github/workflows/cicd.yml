@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mm-rag-test
-          path: ${{ runner.temp }}
+          path: ${{ runner.temp }}/image.tar
 
 
   test:
@@ -76,12 +76,10 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install dependencies
-        working-directory: ./multimodal-rag/
         run: |
-          pip3 install -r infrastructure/pyproject.toml
+          pip3 install -r /infrastructure/pyproject.toml
           sudo npm i -g aws-cdk
 
       - name: Deploy
-        working-directory: ./multimodal-rag/
         run: |
           cdk deploy
