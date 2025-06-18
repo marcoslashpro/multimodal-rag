@@ -1,5 +1,5 @@
 {
-  "app": "python3 ./cdk/app.py",
+  "app": "python3 ./infrastructure/app.py",
   "watch": {
     "include": [
       "**"
