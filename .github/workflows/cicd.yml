@@ -22,10 +22,11 @@ jobs:
           docker save mm-rag:test -o image.tar
 
       - name: upload test image artifact
+
         uses: actions/upload-artifact@v4
         with:
           name: test-image
-          path: /image.tar
+          path: image.tar
 
   test:
     needs: build-test
