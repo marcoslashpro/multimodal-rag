@@ -44,6 +44,5 @@ jobs:
           docker load --input ${{ runner.temp }}/image.tar
 
       - name: Run tests
-        working-directory: ./multimodal-rag/
         run: |
           docker compose -f .docker/compose.yaml up

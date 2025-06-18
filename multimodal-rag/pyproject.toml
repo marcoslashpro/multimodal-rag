@@ -27,6 +27,7 @@ dev = [
     "httpx>=0.28.1",
     "moto>=5.1.6",
     "nose2>=0.15.1",
+    "pytest-cov>=6.2.1",
     "pytest-mock>=3.14.1",
     "python-docx>=1.2.0",
     "reportlab>=4.4.1",
@@ -39,7 +40,7 @@ package = true
 multimodal-rag = { workspace = true }
 
 [tool.pytest.ini_options]
-addopts = '--cov=src'
+addopts = '--cov=src/mm_rag'
 testpaths = [
     'tests'
 ]
@@ -59,6 +60,7 @@ deps = [
     "httpx>=0.28.1",
     "moto>=5.1.6",
     "nose2>=0.15.1",
+    "pytest-cov>=6.2.1",
     "pytest-mock>=3.14.1",
     "python-docx>=1.2.0",
     "reportlab>=4.4.1",
