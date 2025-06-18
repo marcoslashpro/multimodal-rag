@@ -25,7 +25,7 @@ jobs:
 
         uses: actions/upload-artifact@v4
         with:
-          name: test-image
+          name: mm-rag:test
           path: image.tar
 
   test:
