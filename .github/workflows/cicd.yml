@@ -25,8 +25,8 @@ jobs:
 
         uses: actions/upload-artifact@v4
         with:
-          name: mm-rag:test
-          path: image.tar
+          name: mm-rag-test
+          path: ./tmp/
 
   test:
     needs: build-test
@@ -36,12 +36,12 @@ jobs:
       - name: Load the test-container
         uses: actions/download-artifact@v4
         with:
-          name: mm-rag:test
-          path: /image.tar
+          name: mm-rag-test
+          path: image.tar
 
       - name: Spin up test-container
         run: |
-          docker load --input /image.tar
+          docker load --input ./tmp/image.tar
 
       - name: Run tests
         working-directory: ./multimodal-rag/
