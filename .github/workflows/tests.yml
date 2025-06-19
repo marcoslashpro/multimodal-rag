@@ -50,23 +50,16 @@ jobs:
           name: mm-rag-test
           path: ${{ runner.temp }}/image.tar
 
-
   test:
-    needs: [build-test, configure-aws]
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Load the test-container
-        uses: actions/download-artifact@v4
+      - name: setup python 3.12
+        uses: actions/setup-python@v2
         with:
-          name: mm-rag-test
-          path: ${{ runner.temp }}
-
-      - name: load test-container
-        run: |
-          docker load --input ${{ runner.temp }}/image.tar
+          python-version: 3.12
 
       - name: load aws credentials
         uses: actions/download-artifact@v4
@@ -74,7 +67,13 @@ jobs:
           name: aws-credentials
           path: ~/.aws
 
-      - name: Run tests
-        working-directory: ./multimodal-rag/
+      - name: install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies
         run: |
-          docker compose -f ./.docker/compose.yaml up
+          uv sync
+          uv add tox-gh-actions
+
+      - name: Test with tox
+        run: uvx tox -p

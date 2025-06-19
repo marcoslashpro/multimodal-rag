@@ -183,3 +183,6 @@ api-url.txt
 
 #VSCode
 .vscode
+
+# Docker stuff
+.docker

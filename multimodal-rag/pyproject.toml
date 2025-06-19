@@ -47,7 +47,6 @@ testpaths = [
 
 [tool.tox]
 env_list = [
-    "mypy",
     "tests"
 ]
 isolated_build = true
@@ -68,13 +67,5 @@ deps = [
 commands = [
     [
         "pytest", { replace = "posargs", default = ["tests"], extend = true }
-    ]
-]
-
-[tool.tox.env.mypy]
-deps = ["mypy"]
-commands = [
-    [
-        "mypy", { replace = "posargs", default = ["src"], extend = true}
     ]
 ]

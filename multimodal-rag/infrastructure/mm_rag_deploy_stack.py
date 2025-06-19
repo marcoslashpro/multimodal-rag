@@ -13,7 +13,6 @@ from aws_cdk.aws_apigatewayv2_alpha import (
 )
 from aws_cdk.aws_apigatewayv2_integrations_alpha import HttpLambdaIntegration
 from constructs import Construct
-import os
 from pathlib import Path
 
 class MmRagDeployStack(Stack):
@@ -40,8 +39,7 @@ class MmRagDeployStack(Stack):
         docker_func = lambda_.DockerImageFunction(
             self, "FastAPIDockerDeploy",
             code=lambda_.DockerImageCode.from_image_asset(
-                directory=f'{self.asset_dir}',
-                file='.docker/Dockerfile'
+                f'{self.asset_dir}'
             ),
             timeout=Duration.seconds(120),
             memory_size=1024,
