@@ -57,4 +57,4 @@ jobs:
 
       - name: Test with nose2
         working-directory: ./repo/multimodal-rag
-        run: uvx nose2
+        run: uv run nose2

@@ -21,19 +21,19 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          path: repo
+          path: main
 
       - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Install dependencies
-        working-directory: ./repo/multimodal-rag/infrastructure
+        working-directory: ./main/multimodal-rag/infrastructure
         run: |
           uv sync
           sudo npm i -g aws-cdk
 
       - name: Deploy
-        working-directory: ./repo/multimodal-rag/infrastructure
+        working-directory: ./main/multimodal-rag/infrastructure
         run: |
           uv run cdk deploy --region eu-central-1
