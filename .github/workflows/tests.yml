@@ -28,8 +28,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          path: repo
 
       - name: setup python 3.12
         uses: actions/setup-python@v2
@@ -46,15 +44,15 @@ jobs:
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Install dependencies
-        working-directory: ./repo/multimodal-rag
+        working-directory: multimodal-rag
         run: |
           uv sync
           uv add tox-gh-actions
 
       - name: Test with tox
-        working-directory: ./repo/multimodal-rag
+        working-directory: multimodal-rag
         run: uvx tox -p
 
       - name: Test with nose2
-        working-directory: ./repo/multimodal-rag
+        working-directory: multimodal-rag
         run: uv run nose2
