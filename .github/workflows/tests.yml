@@ -20,7 +20,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: aws-credentials
-          path: ~/.aws
+          path: ~/.aws/credentials
 
   build-test:
     runs-on: ubuntu-latest
