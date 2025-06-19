@@ -52,4 +52,5 @@ jobs:
         run: uvx tox -p
 
       - name: Test with nose2
+        working-directory: multimodal-rag/
         run: uv run nose2
