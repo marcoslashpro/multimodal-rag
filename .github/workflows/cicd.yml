@@ -1,75 +1,21 @@
 name: cicd.yml
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
 jobs:
 
-  setup-credentials:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Prepare AWS credentials
-        run: |
-          mkdir -p ~/.aws
-          echo "[default]" > ~/.aws/credentials
-          echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
-          echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
-  
-
-  build-test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: build the test image
-        working-directory: ./multimodal-rag/
-        run: |
-          docker compose -f .docker/compose.yaml build
-
-      - name: save image
-        run: |
-          docker save mm-rag:test -o ${{ runner.temp }}/image.tar
-
-      - name: upload test image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mm-rag-test
-          path: ${{ runner.temp }}/image.tar
-
-
-  test:
-    needs: build-test
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Load the test-container
-        uses: actions/download-artifact@v4
-        with:
-          name: mm-rag-test
-          path: ${{ runner.temp }}
-
-      - name: Spin up test-container
-        run: |
-          docker load --input ${{ runner.temp }}/image.tar
-
-      - name: Run tests
-        working-directory: ./multimodal-rag/
-        run: |
-          docker compose -f ./.docker/compose.yaml up
-          
+  call-test-workflow:
+    uses: ./.github/workflows/tests.yml
+    secrets: inherit
 
   deploy:
-    needs: test
+    needs: call-test-workflow
     runs-on: ubuntu-latest
 
     steps:
@@ -80,12 +26,12 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Install dependencies
-        working-directory: ./infrastructure
+        working-directory: ./multimodal-rag/infrastructure
         run: |
           uv sync
           sudo npm i -g aws-cdk
 
       - name: Deploy
-        working-directory: ./infrastructure
+        working-directory: ./multimodal-rag/infrastructure
         run: |
           uv run cdk deploy

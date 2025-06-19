@@ -4,7 +4,6 @@ from aws_cdk import (
     aws_lambda as lambda_,
     CfnOutput,
     aws_iam as iam,
-    pipelines
 )
 from aws_cdk.aws_apigatewayv2_alpha import (
     CorsHttpMethod,
@@ -14,13 +13,13 @@ from aws_cdk.aws_apigatewayv2_alpha import (
 )
 from aws_cdk.aws_apigatewayv2_integrations_alpha import HttpLambdaIntegration
 from constructs import Construct
+import os
 from pathlib import Path
 
 class MmRagDeployStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
-        self.base_path = Path(__file__).parent.parent
 
         # Create a dedicated IAM role for the Lambda function.
         lambda_role = iam.Role(
@@ -40,9 +39,9 @@ class MmRagDeployStack(Stack):
         docker_func = lambda_.DockerImageFunction(
             self, "FastAPIDockerDeploy",
             code=lambda_.DockerImageCode.from_image_asset(
-                    directory = str(self.base_path / "multimodal-rag"),
-                    file = str(self.base_path / "multimodal-rag/.docker/Dockerfile")
-                ),
+                directory=f'{Path(__file__).parent.parent}/.docker/',
+                file='Dockerfile'
+            ),
             timeout=Duration.seconds(120),
             memory_size=1024,
             role=lambda_role,

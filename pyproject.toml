@@ -9,5 +9,4 @@ dependencies = []
 [tool.uv.workspace]
 members = [
     "multimodal-rag",
-    "cdk",
 ]
