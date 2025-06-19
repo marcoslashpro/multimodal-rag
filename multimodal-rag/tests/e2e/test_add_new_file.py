@@ -9,7 +9,6 @@ from mm_rag.utils import get_secret
 
 
 test_client = TestClient(app)
-test_token = "4BDzGbShH6BK6cANeA3dhrE7GTMyn2wi3tfBS8FvLs8"
 
 
 def test_add_new_file_success():

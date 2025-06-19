@@ -11,12 +11,11 @@ logger = create_logger(__name__)
 
 def formatter(state: 'State'):
   retrieved = state.get('retrieved')
-  handler = state['img_handler']
   bucket = state['bucket']
   messages = state.get("messages", [])
   query = state.get('query')
 
-  logger.debug(f"Retrieved from the state: {retrieved = }\n{handler = }\n{bucket = }\n{messages = }\n{query = }")
+  logger.debug(f"Retrieved from the state: {retrieved = }\n{bucket = }\n{messages = }\n{query = }")
 
   rag_prompt = retrieval_prompt.invoke({'query': query}).to_string().removeprefix("Human: ")
 

@@ -29,7 +29,6 @@ class TestMessageCreation(unittest.TestCase):
       'vlm': MagicMock(),
       'is_retrieval_required': 'True',
       'bucket': MagicMock(),
-      'img_handler': MagicMock()
     }
 
     expected_text_message = {"messages" : [
@@ -71,7 +70,7 @@ class TestMessageCreation(unittest.TestCase):
           'vlm': MagicMock(),
           'is_retrieval_required': 'True',
           'bucket': mock_bucket,
-          'img_handler': MagicMock()
+
         }
 
         expected_img_message = {
@@ -120,7 +119,6 @@ class TestMessageCreation(unittest.TestCase):
       'vlm': MagicMock(),
       'is_retrieval_required': 'True',
       'bucket': mock_bucket,
-      'img_handler': MagicMock()
     }
     expected_message_format = {
       'messages': [
@@ -159,7 +157,6 @@ class TestMessageCreation(unittest.TestCase):
       'vlm': MagicMock(),
       'is_retrieval_required': 'True',
       'bucket': MagicMock(),
-      'img_handler': MagicMock()
     }
     expected_error_message_prompt = {'messages': [
       {
@@ -199,7 +196,6 @@ class TestMessageCreation(unittest.TestCase):
           'vlm': MagicMock(),
           'is_retrieval_required': 'True',
           'bucket': MagicMock(),
-          'img_handler': MagicMock()
         }
 
         expected_error_message_prompt = {

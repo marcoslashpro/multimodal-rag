@@ -36,7 +36,7 @@ async def add_file(
     logger.debug(f"Uploading file: {path}, with userId = {user.user_id}")
     await upload_file(path, user.user_id)
 
-  except (FileNotValidError, FileNotFoundError) as e:
+  except FileNotValidError as e:
     return {
       "status": 404,
       "error": {
@@ -50,13 +50,21 @@ async def add_file(
         "message": f"A validation error occured while processing the file {file.filename}: {e}"
       },
     }
-  except (ObjectUpsertionError, ExceptionGroup) as e:
+  except ObjectUpsertionError as e:
     return {
       "status": 500,
       "error": {
         "message": f"Error while uploading into {e.storage}. Upload in the other storage canceled."
       }
     }
+  except ExceptionGroup as exceptions:
+    for e in exceptions.exceptions:
+      return {
+        "status": 500,
+        "error": {
+          f"Unexpected error while uploading into the databases: {e}"
+        }
+      }
 
   return {
     "status": 200,
