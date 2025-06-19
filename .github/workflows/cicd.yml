@@ -26,12 +26,12 @@ jobs:
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Install backend dependencies
-        working-directory: /infrastructure
+        working-directory: ${{ github.workspace }}/infrastructure
         run: |
           pwd
           uv sync
           sudo npm i -g aws-cdk
 
       - name: Deploy with CDK
-        working-directory: /infrastructure
+        working-directory: ${{ github.workspace }}/infrastructure
         run: uv run cdk deploy --region eu-central-1 --require-approval never
