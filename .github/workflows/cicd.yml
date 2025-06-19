@@ -21,19 +21,17 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
-        with:
-          path: main
 
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Install backend dependencies
-        working-directory: ../infrastructure
+        working-directory: /infrastructure
         run: |
           pwd
           uv sync
           sudo npm i -g aws-cdk
 
       - name: Deploy with CDK
-        working-directory: ../infrastructure
+        working-directory: /infrastructure
         run: uv run cdk deploy --region eu-central-1 --require-approval never
