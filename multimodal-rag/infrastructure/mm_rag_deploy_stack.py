@@ -20,6 +20,7 @@ class MmRagDeployStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        self.asset_dir = Path(__file__).parent.parent
 
         # Create a dedicated IAM role for the Lambda function.
         lambda_role = iam.Role(
@@ -39,8 +40,8 @@ class MmRagDeployStack(Stack):
         docker_func = lambda_.DockerImageFunction(
             self, "FastAPIDockerDeploy",
             code=lambda_.DockerImageCode.from_image_asset(
-                directory=f'{Path(__file__).parent.parent}/.docker/',
-                file='Dockerfile'
+                directory=f'{self.asset_dir}',
+                file='.docker/Dockerfile'
             ),
             timeout=Duration.seconds(120),
             memory_size=1024,
