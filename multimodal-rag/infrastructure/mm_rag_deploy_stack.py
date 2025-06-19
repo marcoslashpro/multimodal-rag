@@ -25,7 +25,7 @@ class MmRagDeployStack(Stack):
         lambda_role = iam.Role(
             self, "LambdaExecutionRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
-            description="Execution role for the Docker-based Lambda function"
+            description="Execution role for the Docker-based Lambda function",
         )
 
         # Option A: Attach an existing managed policy by ARN
