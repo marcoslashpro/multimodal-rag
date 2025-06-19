@@ -25,7 +25,7 @@ COPY . .
 ENV PATH="/root/.local/bin:${PATH}"
 
 # Install the dependencies in the pyproject.toml file
-RUN uv sync && uv pip install -e .
+RUN uv sync
 
 # Production Stage #
 FROM python:3.12-slim AS production
