@@ -3,7 +3,7 @@ name: cicd.yml
 on:
   push:
     tags:
-      - 'v[0-9]+\\.[0-9]+\\.[0-9]+'
+      - 'v*.*.*'
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
