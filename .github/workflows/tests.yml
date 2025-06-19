@@ -49,6 +49,7 @@ jobs:
           uv add tox-gh-actions
 
       - name: Test with tox
+        working-directory: multimodal-rag/
         run: uvx tox -p
 
       - name: Test with nose2
