@@ -46,10 +46,10 @@ jobs:
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Install dependencies
-        working-directory: ./repo/multimodal-rag
         run: |
           uv sync
           uv add tox-gh-actions
 
       - name: Test with tox
+        working-directory: ./repo/multimodal-rag
         run: uvx tox -p
