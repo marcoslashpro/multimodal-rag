@@ -54,3 +54,7 @@ jobs:
       - name: Test with tox
         working-directory: ./repo/multimodal-rag
         run: uvx tox -p
+
+      - name: Test with nose2
+        working-directory: ./repo/multimodal-rag
+        run: uvx nose2
