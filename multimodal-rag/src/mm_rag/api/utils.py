@@ -51,8 +51,6 @@ def authorize(ddb: DynamoDB, token: str) -> AuthUser:
   
   user = user[0]
 
-  logger.debug(f"Authenticated user: {user}")
-
   user_id = user.get("userId")
   pat = user.get("PAT")
 
