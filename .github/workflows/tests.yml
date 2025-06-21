@@ -53,10 +53,6 @@ jobs:
           chmod +x /usr/local/bin/tectonic && \
           rm tectonic-0.15.0-x86_64-unknown-linux-musl.tar.gz
 
-      - name: Test with tox
+      - name: Test with pytest
         working-directory: multimodal-rag/
-        run: uvx tox -p
-
-      - name: Test with nose2
-        working-directory: multimodal-rag/
-        run: uv run nose2
+        run: uv run pytest
