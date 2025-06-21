@@ -10,7 +10,7 @@ from mm_rag.pipelines.extractors import (
     ImgExtractor,
     ImageTooBigError
 )
-import mm_rag.pipelines.datastructures as ds
+import mm_rag.datastructures as ds
 
 class DummyMetadata(ds.Metadata):
     def __init__(self):

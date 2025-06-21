@@ -1,5 +1,5 @@
 from typing import Literal
-
+from mm_rag import datastructures as ds
 
 class FileNotValidError(Exception):
     """
@@ -40,14 +40,40 @@ class ObjectUpsertionError(Exception):
   """
   def __init__(
       self,
-      storage: Literal['BucketService', 'PineconeVectorStore'],
+      storage: ds.Storages,
       msg: str | None = None
     ) -> None:
     self.storage = storage
-    msg = msg or f'Failed to upsert into {self.storage}'
-    super().__init__(msg)
+    self.msg = msg or f'Failed to upsert into {self.storage}'
+    super().__init__(self.msg)
 
 
 class MissingItemError(Exception):
   def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+
+class ResponseValidationError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+
+class MissingResponseContentError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+
+class MalformedResponseError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+
+class MessageError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+
+class ObjectDeletionError(Exception):
+  def __init__(self, storage: ds.Storages, *args: object) -> None:
+    self.storage = storage
     super().__init__(*args)

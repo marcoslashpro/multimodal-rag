@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal, Any
 
 from mm_rag.pipelines.retrievers import Retriever
 from mm_rag.models.s3bucket import BucketService
@@ -53,7 +53,7 @@ builder.add_edge("format", "chatbot")
 graph = builder.compile()
 
 
-def run_chatbot(query: str, retriever: 'Retriever', vlm: 'VLM', bucket: 'BucketService'):
+def run_chatbot(query: str, retriever: 'Retriever', vlm: 'VLM', bucket: 'BucketService') -> Any | None:
   state = {
     "messages": [],
     "is_retrieve_required": None,
@@ -76,3 +76,4 @@ def run_chatbot(query: str, retriever: 'Retriever', vlm: 'VLM', bucket: 'BucketS
     logger.debug(f"Last message content: {last_message.content}")
 
     return last_message.content
+  return None

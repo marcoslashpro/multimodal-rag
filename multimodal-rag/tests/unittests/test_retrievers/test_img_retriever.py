@@ -1,6 +1,6 @@
-from src.mm_rag.pipelines.retrievers import Retriever
-from src.mm_rag.models import dynamodb, vectorstore, s3bucket
-from src.mm_rag.agents.mm_embedder import Embedder
+from mm_rag.pipelines.retrievers import Retriever
+from mm_rag.models import dynamodb, vectorstore, s3bucket
+from mm_rag.agents.mm_embedder import Embedder
 
 from unittest.mock import MagicMock, patch
 import unittest
@@ -69,7 +69,7 @@ class TestImgRetrieveMethod(unittest.TestCase):
     mock_response[0].id = prop_response['matches'][0].get('id')
     mock_response[0].metadata = prop_response['matches'][0].get('metadata')
 
-    with patch('src.mm_rag.pipelines.retrievers.Retriever.retrieve', return_value=mock_response) as mock_retrieve,\
+    with patch('mm_rag.pipelines.retrievers.Retriever.retrieve', return_value=mock_response) as mock_retrieve,\
         patch.object(self.retriever._embedder, 'embed_query', return_value=[0.1, 0.2]):
         self.retriever.retrieve(mock_query)
 

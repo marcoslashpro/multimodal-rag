@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from typing import Any
 import boto3
@@ -5,7 +6,8 @@ import boto3.dynamodb
 import boto3.dynamodb.conditions
 from botocore.exceptions import ClientError
 
-from mm_rag.exceptions import MissingItemError
+from mm_rag.datastructures import Storages
+from mm_rag.exceptions import MissingItemError, ObjectDeletionError
 from mm_rag.logging_service.log_config import create_logger
 
 
@@ -29,7 +31,7 @@ class DynamoDB:
   @property
   def users(self):
     try:
-      # Try to create the table if it does not exists
+      # Try to create the table if it does not exist
       table = self.ddb.create_table(  # type: ignore
         TableName = 'users',
         KeySchema = [
@@ -286,20 +288,27 @@ class DynamoDB:
       raise
     return True
 
-  def clean(self) -> None:
-    scan = self.files.scan(
-      ProjectionExpression='#k, #s',
-      ExpressionAttributeNames={
-        '#k': 'userId',
-        '#s': 'fileId'
-      }
-    )
-    with self.files.batch_writer() as batch:
-      for item in scan['Items']:
-        batch.delete_item(Key={
-          'userId': item['userId'],
-          'fileId': item['fileId']
-        })
+  def clean(self):
+    try:
+      scan = self.files.scan(
+        ProjectionExpression='#k, #s',
+        ExpressionAttributeNames={
+          '#k': 'userId',
+          '#s': 'fileId'
+        }
+      )
+      with self.files.batch_writer() as batch:
+        for item in scan['Items']:
+          batch.delete_item(Key={
+            'userId': item['userId'],
+            'fileId': item['fileId']
+          })
+    except ClientError as e:
+      raise ObjectDeletionError(Storages.DYNAMO) from e
+
+
+  async def aclean(self):
+    await asyncio.to_thread(self.clean)
 
 if __name__ == '__main__':
   ddb = DynamoDB()

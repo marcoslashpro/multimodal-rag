@@ -1,4 +1,4 @@
-from mm_rag.app.utils import authorize
+from mm_rag.api.utils import authorize
 from mm_rag.models.dynamodb import DynamoDB
 from mm_rag.exceptions import MissingItemError
 

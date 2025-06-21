@@ -1,8 +1,6 @@
 import unittest
-from unittest.mock import AsyncMock, MagicMock, patch, call
-import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
 
-import mm_rag.pipelines.datastructures as ds
 from mm_rag.pipelines.pipes import pipe
 from mm_rag.exceptions import ObjectUpsertionError
 

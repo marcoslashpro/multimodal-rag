@@ -8,7 +8,7 @@ from langchain_core.documents import Document
 from mm_rag.pipelines.extractors import (
     TxtExtractor
 )
-import mm_rag.pipelines.datastructures as ds
+import mm_rag.datastructures as ds
 
 class DummyMetadata(ds.Metadata):
     def __init__(self):
@@ -38,7 +38,7 @@ class TestTxtExtractor(unittest.TestCase):
         os.unlink(f.name)
 
     def test_extract_docs(self):
-        with patch("mm_rag.pipelines.utils._generate_ids", return_value=["id"]), \
+        with patch("mm_rag.pipelines.utils.generate_ids", return_value=["id"]), \
              patch("mm_rag.pipelines.utils.generate_docs", return_value=[Document(page_content="abc")]):
             docs = self.extractor._extract_docs("abc", self.metadata)
             self.assertTrue(all(isinstance(doc, Document) for doc in docs))

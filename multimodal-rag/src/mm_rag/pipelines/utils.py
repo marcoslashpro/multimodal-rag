@@ -1,9 +1,8 @@
 import base64
 import io
-import os
 from dataclasses import asdict
-from mm_rag.exceptions import FileNotValidError, DocGenerationError
-import mm_rag.pipelines.datastructures as ds
+from mm_rag.exceptions import DocGenerationError
+import mm_rag.datastructures as ds
 
 from PIL import Image
 from langchain_core.documents import Document
@@ -81,7 +80,7 @@ def generate_docs(ids: list[str], splits: list[str], metadata: ds.Metadata) -> l
 
   return docs
 
-def _generate_ids(file_id: str, range_of_ids: int) -> list[str]:
+def generate_ids(file_id: str, range_of_ids: int) -> list[str]:
   ids: list[str] = []
 
   for i in range(range_of_ids):

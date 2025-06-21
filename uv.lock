@@ -992,16 +992,6 @@ name = "mm-rag"
 version = "0.1.0"
 source = { virtual = "." }
 
-[package.dev-dependencies]
-dev = [
-    { name = "nose2" },
-]
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-dev = [{ name = "nose2", specifier = ">=0.15.1" }]
-
 [[package]]
 name = "moto"
 version = "5.1.6"

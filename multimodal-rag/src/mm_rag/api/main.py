@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from mangum import Mangum
 import uvicorn
-from mm_rag.app.routes.views.add_file import upload_router
-from mm_rag.app.routes.views.search import search_router
-from mm_rag.app.routes.views.chat import chat_router
-from mm_rag.app.routes.views.clean import cleanup_router
+from mm_rag.api.routes.add_file import upload_router
+from mm_rag.api.routes.search import search_router
+from mm_rag.api.routes.chat import chat_router
+from mm_rag.api.routes.clean import cleanup_router
 from mm_rag.logging_service.log_config import create_logger
 
 

@@ -1,11 +1,10 @@
-from typing import TYPE_CHECKING
+import asyncio
 
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.config.config import config
 from mm_rag.agents.mm_embedder import Embedder
 from mm_rag.exceptions import ObjectUpsertionError
-if TYPE_CHECKING:
-  from mm_rag.pipelines.datastructures import Metadata
+import mm_rag.datastructures as ds
 
 import pinecone
 from pinecone import Pinecone, Vector
@@ -15,6 +14,7 @@ from langchain_pinecone import PineconeVectorStore as lcPineconeVectorStore
 
 from botocore.exceptions import ClientError
 
+from mm_rag.exceptions import ObjectDeletionError
 
 logger = create_logger(__name__)
 
@@ -95,7 +95,7 @@ class PineconeVectorStore(VectorStoreFactory):
   def add_image(
       self,
       encoded_img: str,
-      metadata: "Metadata",
+      metadata: ds.Metadata,
       file_id: str,
     ) -> bool:
     try:
@@ -124,11 +124,17 @@ class PineconeVectorStore(VectorStoreFactory):
       )
     except pinecone.PineconeException as e:
       logger.error(e)
-      raise ObjectUpsertionError("PineconeVectorStore") from e 
+      raise ObjectUpsertionError(ds.Storages.VECTORSTORE) from e
     return True
 
   def clean(self) -> None:
-    self.vector_store.delete(delete_all=True)
+    try:
+      self.vector_store.delete(delete_all=True)
+    except pinecone.PineconeException as e:
+      raise ObjectDeletionError(ds.Storages.VECTORSTORE) from e
+
+  async def aclean(self):
+    await asyncio.to_thread(self.clean)
 
   def remove_object(self, id: str) -> None:
     self.vector_store.delete([id], namespace=self.namespace)

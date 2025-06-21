@@ -35,3 +35,9 @@ class File:
 
 Path: TypeAlias = str
 UserId: TypeAlias = str
+
+
+class Storages(Enum):
+  BUCKET = 'BucketService'
+  VECTORSTORE = 'PineconeVectorStore'
+  DYNAMO = 'DynamoDB'

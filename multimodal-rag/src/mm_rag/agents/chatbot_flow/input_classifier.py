@@ -4,7 +4,8 @@ if TYPE_CHECKING:
 
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.agents.prompts import classifier_prompt
-from mm_rag.agents.agent_utils import validate_response, ResponseValidationError
+from mm_rag.agents.agent_utils import validate_response
+from mm_rag.exceptions import ResponseValidationError, MessageError
 
 from pydantic import BaseModel, Field
 
@@ -25,6 +26,12 @@ class InputClassifier(BaseModel):
 def classify_input(state: 'State'):
   query = state['query']
   vlm = state['vlm']
+
+  if len(query) == 0:
+    raise MessageError(
+      f"Cannot run inference with an empty message, got: {query}"
+    )
+
   logger.debug(f"Classifying input: {query}")
 
   input_prompt = classifier_prompt.invoke({"query": query}).to_string().removeprefix("Human: ")
@@ -67,3 +74,4 @@ def classify_input(state: 'State'):
 
   if not validated:
     return {"is_retrieval_required": True, "query": query}
+  return None

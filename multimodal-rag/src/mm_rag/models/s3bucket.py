@@ -1,12 +1,15 @@
+import asyncio
+
 import boto3
 import os
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ParamValidationError
 from typing import Any, NewType
 import io
 
 from mm_rag.config.config import config
+from mm_rag.datastructures import Storages
 from mm_rag.logging_service.log_config import create_logger
-from mm_rag.exceptions import MissingRegionError, BucketAccessError, ObjectUpsertionError
+from mm_rag.exceptions import MissingRegionError, BucketAccessError, ObjectUpsertionError, ObjectDeletionError
 
 
 logger = create_logger(__name__)
@@ -67,12 +70,11 @@ class BucketService():
         self.name,
         object_name,
       )
-    except ClientError as e:
-      logger.error(e)
+    except (ClientError, ParamValidationError) as e:
       raise ObjectUpsertionError(
-        storage='BucketService',
-        msg=f"Error while trying to put object {object_name} in the bucket {self.bucket.name}: {str(e)}"
-      ) from e 
+        storage=Storages.BUCKET,
+        msg=f"Error while trying to put object {file_path} in the bucket {self.bucket.name}: {str(e)}"
+      ) from e
 
     return True
 
@@ -91,23 +93,24 @@ class BucketService():
         self.name,
         object_key
       )
-    except ClientError as e:
+    except (ClientError, ParamValidationError) as e:
       raise ObjectUpsertionError(
-        storage="BucketService",
+        storage=Storages.BUCKET,
         msg=f"Error while trying to put object {object_key} in the bucket {self.bucket.name}: {str(e)}"
-      ) from e 
+      ) from e
 
     return True
 
   def upload_object(self, key: str, body: str) -> bool:
     try:
       self.client.put_object(
-        Key=key, Body=body
+        Key=key, Body=body, Bucket=self.bucket.name,
       )
-    except ClientError as e:
+    except (ClientError, ParamValidationError) as e:
+      logger.error("Something is going wrong here: {}".format(e))
       raise ObjectUpsertionError(
-        storage='BucketService'
-      ) from e 
+        storage=Storages.BUCKET,
+      )
 
     return True
 
@@ -177,9 +180,14 @@ class BucketService():
     return True
 
   def delete_all(self) -> bool:
+    response: dict[str, Any] = self.client.list_objects(Bucket=self.bucket.name)
+    contents = response.get('Contents')
+    if not contents:
+      raise ObjectDeletionError(Storages.BUCKET)
+
+    obj_keys: list[dict[str, str]] = [{"Key": obj['Key']} for obj in contents]
+
     try:
-      response: dict[str, Any] = self.client.list_objects(Bucket=self.bucket.name)
-      obj_keys: list[dict[str, str]] = [{"Key": obj['Key']} for obj in response['Contents']]
 
       self.client.delete_objects(
         Bucket=self.bucket.name,
@@ -187,8 +195,12 @@ class BucketService():
       )
     except ClientError as e:
       logger.error(f"Error while deleting all from {self.bucket.name}: ")
-      raise e
+      raise ObjectDeletionError(Storages.BUCKET) from e
+
     return True
+
+  async def adelete_all(self):
+    await asyncio.to_thread(self.delete_all)
 
   def make_public(self):
     """
@@ -215,7 +227,7 @@ class BucketService():
       self.make_object_public(obj_key)
     except ClientError as e:
       print(f'Something went wrong while uploading the public object {object}: {str(e)}')
-      raise ObjectUpsertionError(storage="BucketService", msg=f'Something went wrong while uploading the public object {object}: {str(e)}')
+      raise ObjectUpsertionError(storage=Storages.BUCKET, msg=f'Something went wrong while uploading the public object {object}: {str(e)}')
     return True
   
   def make_object_public(self, obj_key: str) -> str:

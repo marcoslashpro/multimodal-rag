@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 from langchain_core.callbacks.manager import CallbackManagerForRetrieverRun
 
 from mm_rag.logging_service.log_config import create_logger
+from mm_rag.exceptions import MalformedResponseError
 
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
@@ -69,7 +70,7 @@ class Retriever(BaseRetriever):
     )
 
     if not retrieved:
-      raise RuntimeError(
+      raise MalformedResponseError(
         f"Unable to gather response from VectorStore"
       )
 
@@ -93,19 +94,19 @@ class Retriever(BaseRetriever):
     for match in pinecone_response['matches']:
       match_id = match.get('id') or match.get('_id')
       if not match_id:
-        raise ValueError(
+        raise MalformedResponseError(
           f"Malformed Pinecone Response, expected to find `id` field in matches, but none was found"
         )
 
       metadata = match.get('metadata')
       if not metadata:
-        raise ValueError(
+        raise MalformedResponseError(
           f"Malformed PineconeResponse, expected to find `metadata` field in matches, but none was found"
         )
 
       page_content = metadata.get('text') or metadata.get('chunk_text')
       if not page_content:
-        raise ValueError(
+        raise MalformedResponseError(
           f"Malformed PineconeResponse, expected to find either `chunk_text` or `text` in response, but none was found."
         )
 

@@ -8,7 +8,7 @@ from mm_rag.pipelines.extractors import (
     DocExtractor,
     FileNotValidError, ImageTooBigError
 )
-import mm_rag.pipelines.datastructures as ds
+import mm_rag.datastructures as ds
 
 class DummyMetadata(ds.Metadata):
     def __init__(self):
@@ -58,7 +58,7 @@ class TestDocExtractor(unittest.TestCase):
     def test_extract_docs(self):
         img = Image.new("RGB", (10, 10))
         with patch("mm_rag.pipelines.utils.process_img", return_value="imgdata"), \
-             patch("mm_rag.pipelines.utils._generate_ids", return_value=["id"]), \
+             patch("mm_rag.pipelines.utils.generate_ids", return_value=["id"]), \
              patch("mm_rag.pipelines.utils.generate_docs", return_value=[Document(page_content="abc")]):
             docs = self.extractor._extract_docs([img], self.metadata)
             self.assertTrue(all(isinstance(doc, Document) for doc in docs))

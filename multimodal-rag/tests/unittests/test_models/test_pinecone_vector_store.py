@@ -1,20 +1,11 @@
 from mm_rag.models.vectorstore import PineconeVectorStore
-
-from unittest.mock import MagicMock, patch
-import unittest
-
-
-
-from mm_rag.models.vectorstore import PineconeVectorStore
 from mm_rag.agents.mm_embedder import Embedder
-from mm_rag.pipelines.datastructures import Metadata
+from mm_rag.datastructures import Metadata
 from mm_rag.config.config import config
 from mm_rag.utils import get_secret
 
-from pinecone import Vector
-
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from PIL import Image
 

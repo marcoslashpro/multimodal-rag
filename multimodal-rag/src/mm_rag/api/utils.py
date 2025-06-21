@@ -3,6 +3,7 @@ import hashlib
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.exceptions import MissingItemError
 from mm_rag.models.dynamodb import DynamoDB
+from mm_rag.exceptions import FileNotValidError
 
 from fastapi import HTTPException
 
@@ -12,20 +13,20 @@ import os
 
 
 logger = create_logger(__name__)
-lambda_dir = '/tmp/'
+LAMBDA_DIR = '/tmp/'
 
 
 def write_file_to_lambda_path(file: bytes, filename: str) -> str:
 
-  file_path = os.path.join(lambda_dir, filename)
+  file_path = os.path.join(LAMBDA_DIR, filename)
 
   try:
     with open(file_path, 'wb') as f:
       f.write(file)
 
-  except Exception as e:
+  except FileNotFoundError as e:
     logger.error(f"Error while converting the provided file {filename} to a serverless-friendly file: {e}")
-    raise HTTPException(500, f"Error while converting the provided file {filename} to a serverless-friendly file: {e}")
+    raise FileNotValidError(f"Error while converting the provided file {filename} to a serverless-friendly file: {e}")
 
   return file_path
 
@@ -63,7 +64,7 @@ def authorize(ddb: DynamoDB, token: str) -> AuthUser:
   except ValidationError as e:
     raise HTTPException(
       status_code=500,
-      detail=f"Exepected to find a user with both userId and PAT keys, instead found: {user}"
+      detail=f"Expected to find a user with both userId and PAT keys, instead found: {user}"
     )
 
   return auth_user

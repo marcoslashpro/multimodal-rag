@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from mm_rag.app.main import app
-from mm_rag.app.routes.views.chat import ChatInput
+from mm_rag.app.models import Query
 from mm_rag.utils import get_secret
 from os import environ
 

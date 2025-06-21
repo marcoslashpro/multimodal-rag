@@ -3,7 +3,7 @@ if TYPE_CHECKING:
   from mm_rag.agents.chatbot_flow import State
 
 from mm_rag.logging_service.log_config import create_logger
-from mm_rag.agents.agent_utils import (
+from mm_rag.exceptions import (
   MissingResponseContentError,
 )
 
@@ -15,18 +15,7 @@ def chatbot(state: 'State'):
   vlm = state['vlm']
   last_message = state['messages'][-1]
 
-  try:
-    response = vlm.invoke([last_message])
-
-  except MissingResponseContentError as e:
-    return {
-      "messages": [
-        {
-          "role": "assistant",
-          "content": str(e)
-        }
-      ]
-    }
+  response = vlm.invoke([last_message])
 
   return {
     "messages": [

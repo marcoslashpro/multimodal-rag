@@ -16,7 +16,7 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from pydantic import Field
 
 from mm_rag.logging_service.log_config import create_logger
-from mm_rag.agents.agent_utils import MissingResponseContentError
+from mm_rag.exceptions import MissingResponseContentError
 
 
 logger = create_logger(__name__)
@@ -69,31 +69,15 @@ class VLM(BaseChatModel):
       )
 
     # Format the response in a LangChain-friendly way
-    try:
-      message = AIMessage(content=content)
-      generation = ChatGeneration(message=message)
-      result = ChatResult(generations=[generation])
-
-    except Exception as e:
-      logger.error(f'While trying to format the ChatResult for {response.id}:\n{e}')
-      raise
+    message = AIMessage(content=content)
+    generation = ChatGeneration(message=message)
+    result = ChatResult(generations=[generation])
 
     return result
 
   @property
   def _llm_type(self) -> str:
     return 'qwen-vlm'
-
-  def format_messages(self, messages: List[BaseMessage]) -> list[dict[Any, Any]]:
-    formatted_messages: List[dict[Any, Any]] = []
-
-    for message in messages:
-      formatted_messages.append({
-        "role": 'user',
-        "content": message.content
-      })
-
-    return formatted_messages
 
 if __name__ == '__main__':
   pass
