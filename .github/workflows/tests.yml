@@ -45,13 +45,21 @@ jobs:
 
       - name: Install dependencies
         run: |
+          # uv as a package manager
           uv sync
-          uv add tox-gh-actions
+          
+          # Install pandoc
+          sudo apt-get update && sudo apt-get install -y pandoc
+          
+          # Install tectonic, a lightweight LaTeX engine for pandoc
           curl -LO https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%400.15.0/tectonic-0.15.0-x86_64-unknown-linux-musl.tar.gz && \
           tar -xzf tectonic-0.15.0-x86_64-unknown-linux-musl.tar.gz && \
           mv tectonic /usr/local/bin/tectonic && \
           chmod +x /usr/local/bin/tectonic && \
           rm tectonic-0.15.0-x86_64-unknown-linux-musl.tar.gz
+          
+          # Install poppler-utils in order to work with pdf2image
+          sudo apt-get update && sudo apt-get install -y poppler-utils
 
       - name: Test with pytest
         working-directory: multimodal-rag/
