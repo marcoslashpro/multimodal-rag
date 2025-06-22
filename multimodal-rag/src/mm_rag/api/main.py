@@ -6,6 +6,7 @@ from mm_rag.api.routes.search import search_router
 from mm_rag.api.routes.chat import chat_router
 from mm_rag.api.routes.clean import cleanup_router
 from mm_rag.logging_service.log_config import create_logger
+import boto3
 
 
 logger = create_logger(__name__)
@@ -31,3 +32,12 @@ async def root():
       "message": "multi-modal RAG"
     }
   }
+
+@app.get("/debug-creds")
+def debug_creds():
+    session = boto3.session.Session()
+    creds = session.get_credentials()
+    return {
+        "access_key": creds.access_key if creds else "None",
+        "token": creds.token if creds else "None"
+    }

@@ -50,4 +50,4 @@ USER appuser
 ENV PYTHONPATH=/src
 ENV PATH="/var/task/.venv/bin:$PATH"
 
-CMD ["python3", "-m", "awslambdaric", "mm_rag.app.main.handler"]
+CMD ["python3", "-m", "awslambdaric", "mm_rag.api.main.handler"]
