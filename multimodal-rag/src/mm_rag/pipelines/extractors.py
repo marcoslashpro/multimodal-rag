@@ -225,3 +225,7 @@ def validate_path(path: str) -> str:
     )
 
   return path
+
+
+class CodeExtractor(Extractor):
+  pass

@@ -1,10 +1,9 @@
-from mm_rag.pipelines.extractors import TxtExtractor, ImgExtractor, PdfExtractor, DocExtractor, Extractor
+from mm_rag.pipelines.extractors import TxtExtractor, ImgExtractor, PdfExtractor, DocExtractor, CodeExtractor, Extractor
 from mm_rag.pipelines.uploaders import TxtUploader, ImgUploader, PdfUploader, Uploader
 import mm_rag.datastructures as ds
 from mm_rag.models import dynamodb, s3bucket, vectorstore
 from mm_rag.exceptions import ObjectUpsertionError
 from mm_rag.logging_service.log_config import create_logger
-
 
 from typing import Type
 import os
@@ -22,13 +21,14 @@ async def pipe(
     bucket: s3bucket.BucketService
   ) -> None:
 
-  _map: dict[ds.FileType, tuple[Type[Extractor], Type[Uploader]]] = {
+  _map: dict[ds.FileType | type[ds.Code], tuple[Type[Extractor], Type[Uploader]]] = {
     ds.FileType.TXT: (TxtExtractor, TxtUploader),
     ds.FileType.JPEG: (ImgExtractor, ImgUploader),
     ds.FileType.PNG: (ImgExtractor, ImgUploader),
     ds.FileType.JPG: (ImgExtractor, ImgUploader),
     ds.FileType.PDF: (PdfExtractor, PdfUploader),
     ds.FileType.DOCX: (DocExtractor, PdfUploader),
+    ds.FileType.CODE.value: (CodeExtractor, TxtUploader)
   }
   file_type = ds.FileType(os.path.splitext(path)[-1])
   vectorstore = vectorstore_factory.get_vector_store(auth)

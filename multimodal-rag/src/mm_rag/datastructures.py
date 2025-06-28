@@ -6,6 +6,13 @@ from datetime import datetime
 from enum import Enum
 
 
+class Code(Enum):
+   PY = '.py'
+   JS = '.js'
+   TS = '.ts'
+   PHP = '.php'
+
+
 class FileType(Enum):
     JPEG = '.jpeg'
     PNG = '.png'
@@ -13,6 +20,7 @@ class FileType(Enum):
     PDF = '.pdf'
     DOCX = '.docx'
     TXT = '.txt'
+    CODE = Code
 
 
 @dataclass
