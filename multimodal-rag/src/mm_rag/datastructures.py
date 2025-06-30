@@ -7,33 +7,23 @@ from enum import Enum
 
 
 class Code(Enum):
-  BASH = '.bash'
   CPP = '.cpp'
   CSHARP = '.cs'
-  CSS = '.css'
-  DOCKERFILE = 'Dockerfile'
   GO = '.go'
   HTML = '.html'
   JAVA = '.java'
   JS = '.js'
-  JSON = '.json'
   KT = '.kt'
   LUA = '.lua'
-  MAKEFILE = 'Makefile'
   MD = '.md'
   PHP = '.php'
   PY = '.py'
-  R = '.r'
   RB = '.rb'
   RS = '.rs'
   SCALA = '.scala'
-  SH = '.sh'
-  SQL = '.sql'
   SWIFT = '.swift'
   TEX = '.tex'
   TS = '.ts'
-  XML = '.xml'
-  YAML = '.yaml'
 
 
 class Img(Enum):

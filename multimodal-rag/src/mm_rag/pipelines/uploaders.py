@@ -1,11 +1,6 @@
-from typing import TYPE_CHECKING
-import os
-
 from mm_rag.models.dynamodb import DynamoDB
 from mm_rag.models.s3bucket import BucketService
 from mm_rag.models.vectorstore import PineconeVectorStore
-if TYPE_CHECKING:
-  from mm_rag.models import dynamodb, vectorstore, s3bucket
 
 import asyncio
 
@@ -18,7 +13,8 @@ import pinecone
 import mm_rag.datastructures as ds
 import mm_rag.pipelines.utils as utils
 from mm_rag.logging_service.log_config import create_logger
-from mm_rag.exceptions import ObjectUpsertionError, FileNotValidError, StorageError
+from mm_rag.exceptions import ObjectUpsertionError, StorageError
+
 
 logger = create_logger(__name__)
 
@@ -225,3 +221,7 @@ class PdfUploader(Uploader):
         raise ObjectUpsertionError(ds.Storages.BUCKET) from e
 
       logger.debug("Done")
+
+
+class CodeUploader(TxtUploader):
+  pass

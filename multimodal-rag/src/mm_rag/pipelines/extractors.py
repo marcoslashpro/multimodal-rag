@@ -6,7 +6,7 @@ from typing import Union
 
 from PIL import Image
 from langchain_core.documents import Document
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter, Language
 from pdf2image import convert_from_path
 
 from mm_rag.exceptions import FileNotValidError, ImageTooBigError
@@ -221,4 +221,64 @@ def validate_path(path: str) -> str:
 
 
 class CodeExtractor(Extractor):
-  pass
+  def __init__(self, chunk_size: int = 500, chunk_overlap: int = 100):
+    self.chunk_size = chunk_size
+    self.chunk_overlap = chunk_overlap
+
+  def _extract_metadata(self, path: ds.Path, auth: ds.Path) -> ds.Metadata:
+    return super()._extract_metadata(path, auth)
+
+  def _extract_content(self, path: str) -> str:
+    with open(path, 'r', encoding='utf-8') as file:
+      return file.read()
+
+  def _extract_docs(self, content: str, metadata: ds.Metadata) -> list[Document]:
+    splitter = self._create_splitter(metadata.file_type)
+
+    splits = splitter.split_text(content)
+    ids = utils.generate_ids(metadata.file_id, len(splits))
+    docs = utils.generate_docs(ids, splits, metadata)
+    return docs
+
+  def _create_splitter(self, file_ext: str) -> RecursiveCharacterTextSplitter:
+    splitter = RecursiveCharacterTextSplitter(chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap)
+
+    match file_ext:
+      case ds.Code.CPP.value:
+        return splitter.from_language(Language.CPP)
+      case ds.Code.CSHARP.value:
+        return splitter.from_language(Language.CSHARP)
+      case ds.Code.GO.value:
+        return splitter.from_language(Language.GO)
+      case ds.Code.HTML.value:
+        return splitter.from_language(Language.HTML)
+      case ds.Code.JAVA.value:
+        return splitter.from_language(Language.JAVA)
+      case ds.Code.JS.value:
+        return splitter.from_language(Language.JS)
+      case ds.Code.KT.value: # Kotlin
+        return splitter.from_language(Language.KOTLIN)
+      case ds.Code.LUA.value:
+        return splitter.from_language(Language.LUA)
+      case ds.Code.MD.value: # Markdown
+        return splitter.from_language(Language.MARKDOWN)
+      case ds.Code.PHP.value:
+        return splitter.from_language(Language.PHP)
+      case ds.Code.PY.value:
+        return splitter.from_language(Language.PYTHON)
+      case ds.Code.RB.value: # Ruby
+        return splitter.from_language(Language.RUBY)
+      case ds.Code.RS.value: # Rust
+        return splitter.from_language(Language.RUST)
+      case ds.Code.SCALA.value:
+        return splitter.from_language(Language.SCALA)
+      case ds.Code.SWIFT.value:
+        return splitter.from_language(Language.SWIFT)
+      case ds.Code.TEX.value: # LaTeX
+        return splitter.from_language(Language.LATEX)
+      case ds.Code.TS.value: # TypeScript
+        return splitter.from_language(Language.TS)
+      case _: # Default case for any unmapped Code enum member (should ideally not be reached if all are handled)
+        raise FileNotValidError(
+          f"No specific splitter mapping for: {file_ext}"
+        )
