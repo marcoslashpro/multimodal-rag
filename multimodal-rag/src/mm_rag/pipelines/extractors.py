@@ -43,7 +43,7 @@ class Extractor(ABC):
         file_name, file_type = generate_file_name_and_type(path)
         metadata = ds.Metadata(
             file_name=file_name,
-            file_type=file_type.value,
+            file_type=file_type,
             author=auth,
         )
 
@@ -201,15 +201,8 @@ def convert_docx_to_pdf(input_path: str, output_path: str) -> None:
     )
 
 
-def generate_file_name_and_type(file_path: str) -> tuple[str, ds.FileType]:
-  file_name, _file_type = os.path.splitext(os.path.basename(file_path))
-
-  try:
-    file_type = ds.FileType(_file_type)
-  except ValueError:
-    raise FileNotValidError(
-      f"{_file_type} is not yet a supported file type."
-    )
+def generate_file_name_and_type(file_path: str) -> tuple[str, str]:
+  file_name, file_type = os.path.splitext(os.path.basename(file_path))
 
   return file_name, file_type
 

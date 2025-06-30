@@ -7,20 +7,47 @@ from enum import Enum
 
 
 class Code(Enum):
-   PY = '.py'
-   JS = '.js'
-   TS = '.ts'
-   PHP = '.php'
+  BASH = '.bash'
+  CPP = '.cpp'
+  CSHARP = '.cs'
+  CSS = '.css'
+  DOCKERFILE = 'Dockerfile'
+  GO = '.go'
+  HTML = '.html'
+  JAVA = '.java'
+  JS = '.js'
+  JSON = '.json'
+  KT = '.kt'
+  LUA = '.lua'
+  MAKEFILE = 'Makefile'
+  MD = '.md'
+  PHP = '.php'
+  PY = '.py'
+  R = '.r'
+  RB = '.rb'
+  RS = '.rs'
+  SCALA = '.scala'
+  SH = '.sh'
+  SQL = '.sql'
+  SWIFT = '.swift'
+  TEX = '.tex'
+  TS = '.ts'
+  XML = '.xml'
+  YAML = '.yaml'
+
+
+class Img(Enum):
+  JPEG = '.jpeg'
+  PNG = '.png'
+  JPG = '.jpg'
 
 
 class FileType(Enum):
-    JPEG = '.jpeg'
-    PNG = '.png'
-    JPG = '.jpg'
-    PDF = '.pdf'
-    DOCX = '.docx'
-    TXT = '.txt'
-    CODE = Code
+  IMAGE = Img
+  PDF = '.pdf'
+  DOCX = '.docx'
+  TXT = '.txt'
+  CODE = Code
 
 
 @dataclass
@@ -31,14 +58,14 @@ class Metadata:
   created: str = field(default=datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
 
   def __post_init__(self):
-      self.file_id = f'{self.author}/{self.file_type}/{self.file_name}'
+    self.file_id = f'{self.author}/{self.file_type}/{self.file_name}'
 
 
 @dataclass
 class File:
-    metadata: Metadata
-    content: str | Image.Image | list[Image.Image]
-    docs: list[Document]
+  metadata: Metadata
+  content: str | Image.Image | list[Image.Image]
+  docs: list[Document]
 
 
 Path: TypeAlias = str

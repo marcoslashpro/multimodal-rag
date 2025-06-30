@@ -22,13 +22,7 @@ async def upload_file(file_input: str, namespace: str) -> None:
 
   logger.debug(f"Piping file: {file_input} into namespace: {namespace}")
 
-  await setup.pipe(
-    file_input,
-    namespace,
-    setup.dynamo,
-    setup.vector_store_factory,
-    setup.bucket
-  )
+  await setup.piper.pipe(file_input, namespace)
 
   logger.debug(f"Upload of file {file_input} was a success.")
 
@@ -38,8 +32,8 @@ def query_vectorstore(query_input: str, namespace: str) -> list[Document]:
   logger.info(f'Instantiating the retriever')
 
   logger.info(f"Querying the VectorStore with input: {query_input}")
-  vectorstore = setup.vector_store_factory.get_vector_store(namespace)
-  retriever = setup.retriever_factory.get_retriever(vectorstore)
+  vectorstore = setup.factory.get_vector_store(namespace)
+  retriever = setup.factory.get_retriever(namespace)
   try:
     retrieved = retriever.invoke(query_input)
   except MalformedResponseError as e:
@@ -51,7 +45,7 @@ def query_vectorstore(query_input: str, namespace: str) -> list[Document]:
 async def cleanup(namespace: str) -> None:
   try:
     async with asyncio.TaskGroup() as tg:
-      tg.create_task(setup.vector_store_factory.get_vector_store(namespace).aclean()),
+      tg.create_task(setup.factory.get_vector_store(namespace).aclean()),
       tg.create_task(setup.bucket.adelete_all()),
 
   except* ObjectDeletionError as eg:

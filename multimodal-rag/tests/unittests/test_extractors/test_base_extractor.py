@@ -13,7 +13,7 @@ class DummyMetadata(ds.Metadata):
     def __init__(self):
         super().__init__(
             file_name="file",
-            file_type=ds.FileType(".txt").value,
+            file_type='.txt',
             author="user1",
             created="now",
         )
@@ -31,11 +31,7 @@ class TestExtractorBase(unittest.TestCase):
     def test_generate_file_name_and_type_supported(self):
         name, ftype = generate_file_name_and_type("foo.txt")
         self.assertEqual(name, "foo")
-        self.assertIsInstance(ftype, ds.FileType)
-
-    def test_generate_file_name_and_type_unsupported(self):
-        with self.assertRaises(FileNotValidError):
-            generate_file_name_and_type("foo.unsupported")
+        self.assertEqual(ftype, '.txt')
 
 
 if __name__ == "__main__":

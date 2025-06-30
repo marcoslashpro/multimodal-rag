@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+import os
 
 from mm_rag.models.dynamodb import DynamoDB
 from mm_rag.models.s3bucket import BucketService
@@ -17,7 +18,7 @@ import pinecone
 import mm_rag.datastructures as ds
 import mm_rag.pipelines.utils as utils
 from mm_rag.logging_service.log_config import create_logger
-from mm_rag.exceptions import ObjectUpsertionError
+from mm_rag.exceptions import ObjectUpsertionError, FileNotValidError, StorageError
 
 logger = create_logger(__name__)
 
@@ -25,13 +26,60 @@ logger = create_logger(__name__)
 class Uploader(ABC):
   def __init__(
       self,
-      dynamodb: 'dynamodb.DynamoDB',
-      vector_store: 'vectorstore.PineconeVectorStore',
-      bucket: 's3bucket.BucketService',
+      dynamodb: DynamoDB,
+      vector_store: PineconeVectorStore,
+      bucket: BucketService,
   ) -> None:
     self.ddb = dynamodb
     self.vector_store = vector_store
     self.bucket = bucket
+
+  async def aupload(self, file: ds.File) -> None:
+    vector_store_upload_task = None
+    bucket_upload_task = None
+
+    try:
+      async with asyncio.TaskGroup() as tg:
+        logger.debug(f"Creating async upload task group")
+        vector_store_upload_task = tg.create_task(self.aupload_in_vector_store(file))
+        bucket_upload_task = tg.create_task(self.aupload_in_bucket(file))
+
+    except* ObjectUpsertionError as eg:
+      for e in eg.exceptions:
+        if type(e) == ObjectUpsertionError:
+          if e.storage == ds.Storages.BUCKET:
+            if (vector_store_upload_task
+                and vector_store_upload_task.done()
+                and not vector_store_upload_task.cancelled()
+                and not vector_store_upload_task.exception()):
+              logger.warning(
+                "Upload failed in Bucket, rolling back VectorStore upload."
+              )
+              self.vector_store.remove_object(file.metadata.file_id)
+              raise e
+
+          elif e.storage == ds.Storages.VECTORSTORE:
+            if (bucket_upload_task
+                and bucket_upload_task.done()
+                and not bucket_upload_task.cancelled()
+                and not bucket_upload_task.exception()):
+              logger.warning(
+                "Upload failed in VectorStore, rolling back Bucket upload."
+              )
+
+              self.bucket.remove_object(file.metadata.file_id)
+              raise e
+        raise e
+
+    except* Exception as eg:
+      logger.error(f"Unhandled error in exc group: {eg.exceptions}")
+      raise StorageError(
+        f"Something went wrong while upserting the file: {file.metadata.file_name}: {eg.exceptions}"
+      )
+
+  def upload(self, file: ds.File) -> None:
+    self.upload_in_vector_store(file)
+    self.upload_in_bucket(file)
 
   @abstractmethod
   def upload_in_vector_store(self, file: ds.File) -> bool:

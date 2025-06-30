@@ -1,83 +1,137 @@
-from mm_rag.pipelines.extractors import TxtExtractor, ImgExtractor, PdfExtractor, DocExtractor, CodeExtractor, Extractor
-from mm_rag.pipelines.uploaders import TxtUploader, ImgUploader, PdfUploader, Uploader
+import mm_rag.pipelines.extractors as extr
+import mm_rag.pipelines.uploaders as upl
+import mm_rag.pipelines.retrievers as retr
 import mm_rag.datastructures as ds
-from mm_rag.models import dynamodb, s3bucket, vectorstore
-from mm_rag.exceptions import ObjectUpsertionError
+from mm_rag.models import dynamodb, s3bucket, vectorstore as vs
+from mm_rag.exceptions import FileNotValidError
+from mm_rag.agents.mm_embedder import Embedder
 from mm_rag.logging_service.log_config import create_logger
 
 from typing import Type
 import os
 import asyncio
+from dataclasses import dataclass
 
 
 logger = create_logger(__name__)
 
 
-async def pipe(
-    path: ds.Path,
-    auth: ds.UserId,
-    dynamo: dynamodb.DynamoDB,
-    vectorstore_factory: vectorstore.VectorStoreFactory,
-    bucket: s3bucket.BucketService
+class ComponentFactory:
+  def __init__(
+    self,
+    embedder: Embedder,
+    api_key: str,
+    index_name: str,
+    cloud: str,
+    region: str,
+    dynamodb: dynamodb.DynamoDB,
+    bucket: s3bucket.BucketService,
   ) -> None:
+    self.dynamodb = dynamodb
+    self.bucket = bucket
+    self.embedder = embedder
+    self.api_key = api_key
+    self.index_name = index_name
+    self.cloud = cloud
+    self.region = region
 
-  _map: dict[ds.FileType | type[ds.Code], tuple[Type[Extractor], Type[Uploader]]] = {
-    ds.FileType.TXT: (TxtExtractor, TxtUploader),
-    ds.FileType.JPEG: (ImgExtractor, ImgUploader),
-    ds.FileType.PNG: (ImgExtractor, ImgUploader),
-    ds.FileType.JPG: (ImgExtractor, ImgUploader),
-    ds.FileType.PDF: (PdfExtractor, PdfUploader),
-    ds.FileType.DOCX: (DocExtractor, PdfUploader),
-    ds.FileType.CODE.value: (CodeExtractor, TxtUploader)
-  }
-  file_type = ds.FileType(os.path.splitext(path)[-1])
-  vectorstore = vectorstore_factory.get_vector_store(auth)
+  def get_extractor(self, file_path: ds.Path, auth: ds.UserId) -> extr.Extractor:
+    file_ext = self.get_file_ext(file_path)
+    if not hasattr(self, 'vector_store'):
+      self.vector_store = self.get_vector_store(auth)
 
-  extractor_cls, uploader_cls = _map[file_type]
-  extractor = extractor_cls()
-  uploader = uploader_cls(dynamo, vectorstore, bucket)
-  logger.debug(f"File type: {file_type}, piping with: {extractor=} and {uploader=}")
+    file_ext = os.path.splitext(file_path)[-1]
+    if file_ext == ds.FileType.TXT.value:
+      return extr.TxtExtractor()
+    if file_ext in ds.FileType.IMAGE.value:
+      return extr.ImgExtractor()
+    if file_ext == ds.FileType.PDF.value:
+      return extr.PdfExtractor()
+    if file_ext == ds.FileType.DOCX.value:
+      return extr.DocExtractor()
+    elif file_ext in ds.FileType.CODE.value:
+      return extr.CodeExtractor()
+
+    raise FileNotValidError(
+      f"File type: {file_ext} not yet supported"
+    )
+
+  def get_uploader(self, file_path: ds.Path, auth: ds.UserId) -> upl.Uploader:
+    file_ext = self.get_file_ext(file_path)
+    if not hasattr(self, 'vector_store'):
+      self.vector_store = self.get_vector_store(auth)
+
+    if file_ext == ds.FileType.TXT.value:
+      return upl.TxtUploader(
+        dynamodb=self.dynamodb,
+        vector_store=self.vector_store,
+        bucket=self.bucket
+    )
+    if file_ext in ds.FileType.IMAGE.value:
+      return upl.ImgUploader(
+        dynamodb=self.dynamodb,
+        vector_store=self.vector_store,
+        bucket=self.bucket
+    )
+    if (file_ext == ds.FileType.PDF.value or
+        file_ext == ds.FileType.DOCX.value):
+      return upl.PdfUploader(
+        dynamodb=self.dynamodb,
+        vector_store=self.vector_store,
+        bucket=self.bucket
+    )
+    elif file_ext in ds.FileType.CODE.value:
+      return upl.CodeUploader(
+        dynamodb=self.dynamodb,
+        vector_store=self.vector_store,
+        bucket=self.bucket
+    )
+
+    raise FileNotValidError(
+      f"File type: {file_ext} not yet supported"
+    )
+
+  def get_vector_store(self, auth: ds.UserId) -> vs.PineconeVectorStore:
+    return vs.PineconeVectorStore(
+      embedder=self.embedder,
+      api_key=self.api_key,
+      index_name=self.index_name,
+      namespace=auth,
+      cloud=self.cloud,
+      region=self.region
+    )
+
+  def get_retriever(self, auth: ds.UserId, top_k: int = 3) -> retr.Retriever:
+    if not hasattr(self, 'vector_store'):
+      self.vector_store = self.get_vector_store(auth)
+
+    return retr.Retriever(
+      self.vector_store,
+      self.dynamodb,
+      self.bucket,
+      self.embedder,
+      top_k
+    )
+
+  @staticmethod
+  def get_file_ext(path: ds.Path) -> str:
+    return os.path.splitext(path)[-1]
 
 
-  file = extractor.extract(path, auth)
-  logger.debug(f"Generated file: {file}")
+class Piper:
+  def __init__(
+    self,
+    factory: ComponentFactory
+  ) -> None:
+    self.factory = factory
 
-  vector_store_upload_task = None
-  bucket_upload_task = None
+  def _get(self, file_path, auth) -> tuple[upl.Uploader, extr.Extractor]:
+    extractor = self.factory.get_extractor(file_path, auth)
+    uploader = self.factory.get_uploader(file_path, auth)
 
-  try:
-    async with asyncio.TaskGroup() as tg:
-      logger.debug(f"Creating async upload task group")
-      vector_store_upload_task = tg.create_task(uploader.aupload_in_vector_store(file))
-      bucket_upload_task = tg.create_task(uploader.aupload_in_bucket(file))
+    return uploader, extractor
 
-  except* ObjectUpsertionError as eg:
-    for e in eg.exceptions:
-      if type(e) == ObjectUpsertionError:
-        if e.storage == ds.Storages.BUCKET:
-          if (
-            vector_store_upload_task
-            and vector_store_upload_task.done()
-            and not vector_store_upload_task.cancelled()
-            and not vector_store_upload_task.exception()
-          ):
-            logger.warning(
-              "Upload failed in BucketService, rolling back successful VectorStore upload."
-            )
-            vectorstore.remove_object(file.metadata.file_id)
-            raise e
-
-        elif e.storage == ds.Storages.VECTORSTORE:
-          if (
-            bucket_upload_task
-            and bucket_upload_task.done()
-            and not bucket_upload_task.cancelled()
-            and not bucket_upload_task.exception()
-          ):
-            logger.warning(
-              "Upload failed in VectorStore, rolling back successful Bucket upload."
-            )
-
-            bucket.remove_object(file.metadata.file_id)
-            raise e
-      raise e
+  async def pipe(self, file_path: ds.Path, auth: ds.UserId) -> None:
+    uploader, extractor = self._get(file_path, auth)
+    file = extractor.extract(file_path, auth)
+    await uploader.aupload(file)

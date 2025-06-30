@@ -19,33 +19,7 @@ from mm_rag.exceptions import ObjectDeletionError
 logger = create_logger(__name__)
 
 
-class VectorStoreFactory:
-  def __init__(
-      self,
-      embedder: Embedder,
-      api_key: str,
-      index_name: str,
-      cloud: str,
-      region: str
-  ) -> None:
-    self.embedder = embedder
-    self.api_key = api_key
-    self.index_name = index_name
-    self.cloud = cloud
-    self.region = region
-
-  def get_vector_store(self, namespace: str):
-    return PineconeVectorStore(
-      self.embedder,
-      self.api_key,
-      self.index_name,
-      namespace,
-      self.cloud,
-      self.region
-    )
-
-
-class PineconeVectorStore(VectorStoreFactory):
+class PineconeVectorStore:
   def __init__(
     self,
     embedder: Embedder,
@@ -55,7 +29,11 @@ class PineconeVectorStore(VectorStoreFactory):
     cloud: str,
     region: str
 	) -> None:
-    super().__init__(embedder, api_key, index_name, cloud, region)
+    self.embedder = embedder
+    self.api_key = api_key
+    self.index_name = index_name
+    self.cloud = cloud
+    self.region = region
     self.namespace = namespace
 
   @property

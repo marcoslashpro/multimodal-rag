@@ -27,14 +27,16 @@ class MissingRegionError(Exception):
   Therefore, it is important to explain that reliably.
   """
 
+class StorageError(Exception):
+  pass
 
-class BucketAccessError(Exception):
+class BucketAccessError(StorageError):
   """
   Particularly useful when trying to connect to an existing bucket.
   """
 
 
-class ObjectUpsertionError(Exception):
+class ObjectUpsertionError(StorageError):
   """
   Raise this error anytime that there is a failure in the upsertion of an object into a storage facility.
   """
@@ -73,7 +75,7 @@ class MessageError(Exception):
     super().__init__(*args)
 
 
-class ObjectDeletionError(Exception):
+class ObjectDeletionError(StorageError):
   def __init__(self, storage: ds.Storages, *args: object) -> None:
     self.storage = storage
     super().__init__(*args)

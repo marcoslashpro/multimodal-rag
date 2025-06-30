@@ -6,12 +6,10 @@ from pydantic import BaseModel
 from mm_rag.exceptions import MessageError, MissingResponseContentError
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.entrypoints import run_chatbot
-from mm_rag.entrypoints.setup import vlm, bucket, dynamo, retriever_factory, vector_store_factory
+from mm_rag.entrypoints.setup import vlm, bucket, dynamo, factory
 from mm_rag.api.dependencies import auth_pat_dependency, HTTPAuthorizationCredentials
 from mm_rag.api.utils import authorize
 from mm_rag.api.models import Query
-
-from uuid import uuid4
 
 
 logger = create_logger(__name__)
@@ -25,7 +23,7 @@ def chat(chat_input: Query, auth_pat: Annotated[HTTPAuthorizationCredentials, De
   try:
     response = run_chatbot(
       chat_input.query,
-      retriever_factory.get_retriever(vector_store_factory.get_vector_store(user.user_id)),
+      factory.get_retriever(user.user_id),
       vlm,
       bucket
     )

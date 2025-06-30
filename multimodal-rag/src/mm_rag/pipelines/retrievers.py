@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
   from mm_rag.models.dynamodb import DynamoDB
-  from mm_rag.models.vectorstore import PineconeVectorStore, VectorStoreFactory
+  from mm_rag.models.vectorstore import PineconeVectorStore
   from mm_rag.models.s3bucket import BucketService
   from mm_rag.agents.mm_embedder import Embedder
 
@@ -17,29 +17,6 @@ from langchain_core.retrievers import BaseRetriever
 
 
 logger = create_logger(__name__)
-
-
-class RetrieverFactory:
-  def __init__(
-    self,
-    dynamo: 'DynamoDB',
-    bucket: 'BucketService',
-    embedder: 'Embedder',
-    top_k: int = 3,
-  ) -> None:
-    self.dynamo = dynamo
-    self.bucket = bucket
-    self.embedder = embedder
-    self.top_k = top_k
-
-  def get_retriever(self, vector_store: 'PineconeVectorStore') -> 'Retriever':
-    return Retriever(
-      vector_store,
-      self.dynamo,
-      self.bucket,
-      self.embedder,
-      self.top_k
-    )
 
 
 class Retriever(BaseRetriever):

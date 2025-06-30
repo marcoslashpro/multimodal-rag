@@ -6,7 +6,7 @@ from mm_rag.api.utils import write_file_to_lambda_path,authorize
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.entrypoints import upload_file, setup
 from mm_rag.api.dependencies import auth_pat_dependency, HTTPAuthorizationCredentials
-from mm_rag.exceptions import FileNotValidError, DocGenerationError, ImageTooBigError, ObjectUpsertionError
+from mm_rag.exceptions import FileNotValidError, DocGenerationError, ImageTooBigError, ObjectUpsertionError, StorageError
 
 
 upload_router = APIRouter()
@@ -64,13 +64,11 @@ async def add_file(
       status_code=500,
       detail=f"Error while uploading into {e.storage}. Upload in the other storage canceled."
     )
-
-  except ExceptionGroup as exceptions:
-    for e in exceptions.exceptions:
-      raise HTTPException(
-        status_code=500,
-        detail=f"Unexpected error while uploading into the databases: {e}"
-      )
+  except StorageError as e:
+    raise HTTPException(
+      status_code=500,
+      detail=str(e)
+    )
 
   return responses.JSONResponse(
     status_code=200,

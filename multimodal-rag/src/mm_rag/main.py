@@ -1,6 +1,6 @@
 from mm_rag.entrypoints import upload_file, query_vectorstore, run_chatbot, cleanup
 from mm_rag.logging_service.log_config import create_logger
-from mm_rag.entrypoints.setup import vlm, bucket, retriever_factory, vector_store_factory
+from mm_rag.entrypoints.setup import vlm, bucket, factory
 
 import asyncio
 
@@ -21,7 +21,7 @@ def query(user_id: str) -> None:
   )for doc in retrieved]
 
 def chat(user_id: str) -> None:
-  retriever = retriever_factory.get_retriever(vector_store=vector_store_factory.get_vector_store(namespace=user_id))
+  retriever = factory.get_retriever(user_id)
   chat_query = input("You: ")
   run_chatbot(chat_query, retriever, vlm, bucket)
 
@@ -36,7 +36,7 @@ async def main() -> None:
     elif choice == 'chat':
       chat(user_id=user_id)
     elif choice =='clean':
-      cleanup(namespace=user_id)
+      await cleanup(namespace=user_id)
     else:
       print('Softly exiting...')
       quit()
