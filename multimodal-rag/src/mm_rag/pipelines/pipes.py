@@ -42,15 +42,15 @@ class ComponentFactory:
 
     file_ext = os.path.splitext(file_path)[-1]
     if file_ext == ds.FileType.TXT.value:
-      return extr.TxtExtractor()
+      return extr.TxtExtractor(self.embedder.embed_query)
     if file_ext in ds.FileType.IMAGE.value:
-      return extr.ImgExtractor()
+      return extr.ImgExtractor(self.embedder.embed_img)
     if file_ext == ds.FileType.PDF.value:
-      return extr.PdfExtractor()
+      return extr.PdfExtractor(self.embedder.embed_img)
     if file_ext == ds.FileType.DOCX.value:
-      return extr.DocExtractor()
+      return extr.DocExtractor(self.embedder.embed_img)
     elif file_ext in ds.FileType.CODE.value:
-      return extr.CodeExtractor()
+      return extr.CodeExtractor(self.embedder.embed_query)
 
     raise FileNotValidError(
       f"File type: {file_ext} not yet supported"
@@ -125,13 +125,13 @@ class Piper:
   ) -> None:
     self.factory = factory
 
-  def _get(self, file_path, auth) -> tuple[upl.Uploader, extr.Extractor]:
-    extractor = self.factory.get_extractor(file_path, auth)
+  def _get(self, file_path, auth) -> tuple[upl.Uploader, extr.Extractor]:  # Add `embedder: Embedder`
+    extractor = self.factory.get_extractor(file_path, auth)  # Add embedder
     uploader = self.factory.get_uploader(file_path, auth)
 
     return uploader, extractor
 
-  async def pipe(self, file_path: ds.Path, auth: ds.UserId) -> None:
+  async def pipe(self, file_path: ds.Path, auth: ds.UserId) -> None:  
     uploader, extractor = self._get(file_path, auth)
     file = extractor.extract(file_path, auth)
     await uploader.aupload(file)

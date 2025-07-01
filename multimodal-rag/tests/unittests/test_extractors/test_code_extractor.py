@@ -8,7 +8,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter, Language
 
 
 splitter = RecursiveCharacterTextSplitter()
-extractor = CodeExtractor()
+extractor = CodeExtractor(MagicMock())
 
 
 # Map Code enum extensions to Language enum for langchain_text_splitters

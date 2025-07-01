@@ -6,6 +6,7 @@ from datetime import datetime
 from enum import Enum
 
 
+
 class Code(Enum):
   CPP = '.cpp'
   CSHARP = '.cs'
@@ -32,12 +33,18 @@ class Img(Enum):
   JPG = '.jpg'
 
 
+class Audio(Enum):
+  MP3 = '.mp3'
+  WAV = '.wav'
+
+
 class FileType(Enum):
   IMAGE = Img
   PDF = '.pdf'
   DOCX = '.docx'
   TXT = '.txt'
   CODE = Code
+  AUDIO = Audio
 
 
 @dataclass
@@ -49,6 +56,7 @@ class Metadata:
 
   def __post_init__(self):
     self.file_id = f'{self.author}/{self.file_type}/{self.file_name}'
+    self.collection = 'audio' if self.file_type in FileType.AUDIO.value else 'other'
 
 
 @dataclass
@@ -56,10 +64,12 @@ class File:
   metadata: Metadata
   content: str | Image.Image | list[Image.Image]
   docs: list[Document]
+  embeddings: list[list[float]]
 
 
 Path: TypeAlias = str
 UserId: TypeAlias = str
+EmbeddingFunc = Callable[[Union[str]], list[float]]
 
 
 class Storages(Enum):

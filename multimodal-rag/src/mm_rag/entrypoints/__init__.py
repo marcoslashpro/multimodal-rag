@@ -32,7 +32,6 @@ def query_vectorstore(query_input: str, namespace: str) -> list[Document]:
   logger.info(f'Instantiating the retriever')
 
   logger.info(f"Querying the VectorStore with input: {query_input}")
-  vectorstore = setup.factory.get_vector_store(namespace)
   retriever = setup.factory.get_retriever(namespace)
   try:
     retrieved = retriever.invoke(query_input)
@@ -45,8 +44,8 @@ def query_vectorstore(query_input: str, namespace: str) -> list[Document]:
 async def cleanup(namespace: str) -> None:
   try:
     async with asyncio.TaskGroup() as tg:
-      tg.create_task(setup.factory.get_vector_store(namespace).aclean()),
-      tg.create_task(setup.bucket.adelete_all()),
+      tg.create_task(setup.factory.get_vector_store(namespace).aclean())
+      tg.create_task(setup.bucket.adelete_all())
 
   except* ObjectDeletionError as eg:
     logger.error(f"Caught the following exceptions in the exception group: {eg.exceptions}")

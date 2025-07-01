@@ -1,3 +1,4 @@
+from typing import Literal
 import boto3
 from botocore.exceptions import ClientError
 

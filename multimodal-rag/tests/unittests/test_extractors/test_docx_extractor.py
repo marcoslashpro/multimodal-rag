@@ -21,7 +21,7 @@ class DummyMetadata(ds.Metadata):
 
 class TestDocExtractor(unittest.TestCase):
     def setUp(self):
-        self.extractor = DocExtractor()
+        self.extractor = DocExtractor(MagicMock())
         self.metadata = DummyMetadata()
 
     @patch("mm_rag.pipelines.extractors.subprocess.run")

@@ -1,7 +1,7 @@
 import os
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from langchain_core.documents import Document
 
@@ -21,7 +21,7 @@ class DummyMetadata(ds.Metadata):
 
 class TestTxtExtractor(unittest.TestCase):
     def setUp(self):
-        self.extractor = TxtExtractor()
+        self.extractor = TxtExtractor(MagicMock())
         self.metadata = DummyMetadata()
 
     def test_extract_metadata(self):

@@ -1,4 +1,5 @@
 import asyncio
+from typing import Literal
 
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.config.config import config
@@ -14,7 +15,8 @@ from langchain_pinecone import PineconeVectorStore as lcPineconeVectorStore
 
 from botocore.exceptions import ClientError
 
-from mm_rag.exceptions import ObjectDeletionError
+from mm_rag.exceptions import ObjectDeletionError, FileNotValidError, DocGenerationError
+import pinecone.exceptions
 
 logger = create_logger(__name__)
 
@@ -59,16 +61,50 @@ class PineconeVectorStore:
 
   @property
   def vector_store(self) -> lcPineconeVectorStore:
-      try:
-       return lcPineconeVectorStore(
-          index=self.index,
-          embedding=self.embedder,
-          namespace=self.namespace,
-          index_name=self.index_name
+    try:
+      return lcPineconeVectorStore(
+        index=self.index,
+        embedding=self.embedder,
+        namespace=self.namespace,
+        index_name=self.index_name
+      )
+    # TODO Improve error handling
+    except Exception as e:
+      raise
+
+  def add(self, file: ds.File) -> None:
+    if not len(file.docs) == len(file.embeddings):
+      raise ObjectUpsertionError(
+        storage=ds.Storages.VECTORSTORE,
+        msg=f"Length of docs and embeddings of file {file.metadata.file_id} do not match: "
+          "{len(file.docs)} != {len(file.embeddings)}"
+      )
+
+    try:
+      for doc, embeddings in zip(file.docs, file.embeddings):
+        if not doc.id:
+          raise ObjectUpsertionError(
+            storage=ds.Storages.VECTORSTORE,
+            msg=f"Invalid document generated, missing id for doc: {doc}"
+          )
+
+        self.index.upsert(
+          [
+            Vector(
+              id=doc.id,
+              values=embeddings,
+              metadata=doc.metadata
+          )],
+          namespace=self._generate_full_namespace(file.metadata.collection)
         )
-      # TODO Improve error handling
-      except Exception as e:
-        raise
+    except pinecone.exceptions.PineconeException as e:
+      raise ObjectUpsertionError(
+        storage=ds.Storages.VECTORSTORE,
+        msg=str(e)
+      ) from e
+
+  def _generate_full_namespace(self, collection: str) -> str:
+    return self.namespace + f"/{collection}"
 
   def add_image(
       self,

@@ -108,7 +108,7 @@ class TxtUploader(Uploader):
   def upload_in_vector_store(self, file: ds.File) -> bool:
     try:
       logger.debug(f"upserting docs of {file.metadata.file_name} to the VectorStore")
-      self.vector_store.vector_store.add_documents(file.docs)
+      self.vector_store.add(file)
 
       logger.debug("Done")
 
@@ -139,7 +139,7 @@ class ImgUploader(Uploader):
 
     try:
       logger.debug(f'Upserting img: {file.metadata.file_name} to the VectorStore')
-      self.vector_store.add_image(file.docs[0].page_content, file.metadata, file.metadata.file_id)
+      self.vector_store.add(file)
       logger.debug(f"Done.")
 
     except pinecone.PineconeException as e:
@@ -182,7 +182,7 @@ class PdfUploader(Uploader):
 
       try:
         logger.debug(f"Upserting {file.metadata.file_id} to the VectorStore")
-        self.vector_store.add_image(file.docs[i].page_content, file.metadata, page_id)
+        self.vector_store.add(file)
         logger.debug(f"Done.")
 
       except pinecone.PineconeException as e:

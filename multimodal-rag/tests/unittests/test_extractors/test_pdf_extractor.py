@@ -21,7 +21,7 @@ class DummyMetadata(ds.Metadata):
 
 class TestPdfExtractor(unittest.TestCase):
     def setUp(self):
-        self.extractor = PdfExtractor()
+        self.extractor = PdfExtractor(MagicMock())
         self.metadata = DummyMetadata()
 
     @patch("mm_rag.pipelines.extractors.convert_from_path")

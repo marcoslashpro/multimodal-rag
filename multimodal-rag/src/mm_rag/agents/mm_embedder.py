@@ -19,6 +19,9 @@ class Embedder(Embeddings):
     self.client = boto3.client("bedrock-runtime", region_name='eu-central-1')
     self.model_id = model_id
 
+  # Add `def embed_audio(self, audio_input: ?) -> list[float]`
+  # Add `def embed_video(self, video_input: ?) -> list[float]`
+
   def embed_query(self, text: str) -> list[float]:
     request_body = json.dumps({
           "inputText": text

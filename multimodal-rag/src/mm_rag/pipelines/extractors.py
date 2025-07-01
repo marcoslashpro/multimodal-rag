@@ -19,47 +19,56 @@ logger = create_logger(__name__)
 
 
 class Extractor(ABC):
-    def extract(self, path: ds.Path, auth: ds.UserId) -> ds.File:
-        path = validate_path(path)
+  def __init__(self, embedding_func: ds.EmbeddingFunc) -> None:
+    self.embedding_func = embedding_func
 
-        metadata = self._extract_metadata(path, auth)
-        content = self._extract_content(path)
-        docs = self._extract_docs(content, metadata)
+  def extract(self, path: ds.Path, auth: ds.UserId) -> ds.File:
+    path = validate_path(path)
 
-        return ds.File(
-            metadata=metadata,
-            content=content,
-            docs=docs,
-        )
+    metadata = self._extract_metadata(path, auth)
+    content = self._extract_content(path)
+    docs = self._extract_docs(content, metadata)
+    embeddings = self._extract_embeddings(docs)
 
-    @abstractmethod
-    def _extract_metadata(self, path: ds.Path, auth: ds.UserId) -> ds.Metadata:
-        """
-        A minimal implementation of this method is already available in the abstract class.
-        :param path: string, the original file path
-        :param auth: string, the user that owns the file
-        :return: Metadata, containing: author, file_name, file_type, created_time, and the file_id
-        """
-        file_name, file_type = generate_file_name_and_type(path)
-        metadata = ds.Metadata(
-            file_name=file_name,
-            file_type=file_type,
-            author=auth,
-        )
+    return ds.File(
+      metadata=metadata,
+      content=content,
+      docs=docs,
+      embeddings=embeddings
+    )
 
-        return metadata
+  @abstractmethod
+  def _extract_metadata(self, path: ds.Path, auth: ds.UserId) -> ds.Metadata:
+    """
+    A minimal implementation of this method is already available in the abstract class.
+    :param path: string, the original file path
+    :param auth: string, the user that owns the file
+    :return: Metadata, containing: author, file_name, file_type, created_time, and the file_id
+    """
+    file_name, file_type = generate_file_name_and_type(path)
+    metadata = ds.Metadata(
+        file_name=file_name,
+        file_type=file_type,
+        author=auth,
+    )
 
-    @abstractmethod
-    def _extract_content(self, path: ds.Path) -> Union[str | Image.Image, list[Image.Image]]:
-        pass
+    return metadata
 
-    @abstractmethod
-    def _extract_docs(self, content: Union[str | Image.Image, list[Image.Image]], metadata: ds.Metadata) -> list[Document]:
-        pass
+  @abstractmethod
+  def _extract_content(self, path: ds.Path) -> Union[str | Image.Image, list[Image.Image]]:
+    pass
+
+  @abstractmethod
+  def _extract_docs(self, content: Union[str | Image.Image, list[Image.Image]], metadata: ds.Metadata) -> list[Document]:
+    pass
+
+  def _extract_embeddings(self, docs: list[Document]) -> list[list[float]]:
+    return [self.embedding_func(doc.page_content) for doc in docs]
 
 
 class TxtExtractor(Extractor):
-  def __init__(self, chunk_size: int = 500, chunk_overlap: int = 100):
+  def __init__(self, embedding_func: ds.EmbeddingFunc, chunk_size: int = 500, chunk_overlap: int = 100):
+    super().__init__(embedding_func)
     self.chunk_size = chunk_size
     self.chunk_overlap = chunk_overlap
 
@@ -221,7 +230,8 @@ def validate_path(path: str) -> str:
 
 
 class CodeExtractor(Extractor):
-  def __init__(self, chunk_size: int = 500, chunk_overlap: int = 100):
+  def __init__(self, embedding_func: ds.EmbeddingFunc, chunk_size: int = 500, chunk_overlap: int = 100):
+    super().__init__(embedding_func)
     self.chunk_size = chunk_size
     self.chunk_overlap = chunk_overlap
 

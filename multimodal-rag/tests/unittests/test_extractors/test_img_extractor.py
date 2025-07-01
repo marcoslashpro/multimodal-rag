@@ -1,7 +1,7 @@
 import os
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from PIL import Image
 from langchain_core.documents import Document
@@ -23,7 +23,7 @@ class DummyMetadata(ds.Metadata):
 
 class TestImgExtractor(unittest.TestCase):
     def setUp(self):
-        self.extractor = ImgExtractor()
+        self.extractor = ImgExtractor(MagicMock())
         self.metadata = DummyMetadata()
 
     def test_extract_content_success(self):

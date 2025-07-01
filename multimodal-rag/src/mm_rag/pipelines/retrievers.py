@@ -51,7 +51,7 @@ class Retriever(BaseRetriever):
         f"Unable to gather response from VectorStore"
       )
 
-    retrieved_docs: list[Document] = self.transform_response_to_docs(retrieved)  #type: ignore[call-args]
+    retrieved_docs: list[Document] = self.transform_response_to_docs(retrieved)
 
     return retrieved_docs
 
