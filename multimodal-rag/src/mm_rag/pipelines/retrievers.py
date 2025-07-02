@@ -1,5 +1,6 @@
+import io
 import json
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
   from mm_rag.models.dynamodb import DynamoDB
@@ -11,6 +12,7 @@ from langchain_core.callbacks.manager import CallbackManagerForRetrieverRun
 
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.exceptions import MalformedResponseError
+import mm_rag.datastructures as ds
 
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
@@ -37,21 +39,29 @@ class Retriever(BaseRetriever):
 
   def retrieve(self, query: str) -> list[Document]:
     logger.debug(f'Embedding query: {query}')
-    embedded_query: list[float] = self._embedder.embed_query(query)
+    retrieved_docs: list[Document] = []
 
-    retrieved = self._vector_store.index.query(
-      top_k=self._top_k,
-      vector=embedded_query,
-      namespace=self._vector_store.namespace,
-      include_metadata=True
-    )
+    for modality in ds.Collection:
+      embedded_query = self._embedder.embed(query, modality)
 
-    if not retrieved:
-      raise MalformedResponseError(
-        f"Unable to gather response from VectorStore"
+      collection = self._vector_store.namespace + modality.value
+
+      retrieved = self._vector_store.index.query(
+        top_k=self._top_k,
+        vector=embedded_query,
+        namespace=collection,
+        include_metadata=True
       )
+      logger.debug(f"retrieved: {retrieved}")
 
-    retrieved_docs: list[Document] = self.transform_response_to_docs(retrieved)
+      if not retrieved:
+        raise MalformedResponseError(
+          f"Unable to gather response from VectorStore"
+        )
+
+      retrieved_docs.extend(self.transform_response_to_docs(retrieved))
+
+    logger.debug(F"Retrieved docs: {retrieved_docs}")
 
     return retrieved_docs
 
@@ -60,13 +70,9 @@ class Retriever(BaseRetriever):
 
     return retrieved
 
-  def forward(self, query: str) -> str:  # type: ignore[override]
-    retrieved_docs = self.retrieve(query)
-
-    return '\n'.join([doc.page_content for doc in retrieved_docs])
-
   def transform_response_to_docs(self, pinecone_response) -> list[Document]:
     docs: list[Document] = []
+    content_buffer = io.BytesIO()
 
     for match in pinecone_response['matches']:
       match_id = match.get('id') or match.get('_id')
@@ -83,9 +89,14 @@ class Retriever(BaseRetriever):
 
       page_content = metadata.get('text') or metadata.get('chunk_text')
       if not page_content:
-        raise MalformedResponseError(
-          f"Malformed PineconeResponse, expected to find either `chunk_text` or `text` in response, but none was found."
-        )
+        try:
+          page_content = self._bucket.download_to_buffer(match_id, content_buffer).read().decode()
+        except UnicodeDecodeError:
+          page_content = self._bucket.generate_presigned_url(match_id)
+
+          # raise MalformedResponseError(
+          #   f"Malformed PineconeResponse, expected to find either `chunk_text` or `text` in response, but none was found."
+          # )
 
       docs.append(
         Document(

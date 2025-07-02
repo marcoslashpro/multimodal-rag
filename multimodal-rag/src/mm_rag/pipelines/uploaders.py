@@ -122,9 +122,10 @@ class TxtUploader(Uploader):
     logger.debug(f"Inserting {file.metadata.file_name} in {self.bucket.name}")
 
     try:
-      self.bucket.upload_object(
-        file.metadata.file_id, file.content
-      )
+      for doc in file.docs:
+        self.bucket.upload_object(
+          doc.id, doc.page_content
+        )
     except ClientError as e:
       raise ObjectUpsertionError(ds.Storages.BUCKET) from e
 

@@ -289,7 +289,7 @@ class BucketService():
       buffer.seek(0)
     except ClientError as e:
       if e.response['Error']['Code'] == '404':
-        logger.info(f"{object_key} not found in Bucket: {self.bucket.name}")
+        logger.warning(f"{object_key} not found in Bucket: {self.bucket.name}")
         pass
       else:
         raise e

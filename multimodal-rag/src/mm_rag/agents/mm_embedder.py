@@ -6,6 +6,7 @@ from langchain_core.embeddings.embeddings import Embeddings
 import json
 
 from mm_rag.logging_service.log_config import create_logger
+import mm_rag.datastructures as ds
 
 
 logger = create_logger(__name__)
@@ -14,13 +15,24 @@ logger = create_logger(__name__)
 class Embedder(Embeddings):
   def __init__(
       self,
+      # Image model
       model_id: str = 'amazon.titan-embed-image-v1'
+      #Add Audio model
   ) -> None:
     self.client = boto3.client("bedrock-runtime", region_name='eu-central-1')
     self.model_id = model_id
 
   # Add `def embed_audio(self, audio_input: ?) -> list[float]`
   # Add `def embed_video(self, video_input: ?) -> list[float]`
+
+  def embed(self, query: str, modality: ds.Collection) -> list[float]:
+    return self._dispatch_embedding(query, modality)
+
+  def _dispatch_embedding(self, query: str, modality: ds.Collection):
+    if modality == ds.Collection.AUDIO:
+      pass  # Audio coming soon...
+
+    return self.embed_query(query)
 
   def embed_query(self, text: str) -> list[float]:
     request_body = json.dumps({

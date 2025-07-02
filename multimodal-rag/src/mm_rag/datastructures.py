@@ -76,3 +76,8 @@ class Storages(Enum):
   BUCKET = 'BucketService'
   VECTORSTORE = 'PineconeVectorStore'
   DYNAMO = 'DynamoDB'
+
+
+class Collection(Enum):
+  AUDIO = '/audio'
+  OTHER = '/other'

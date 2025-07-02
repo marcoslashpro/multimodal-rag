@@ -7,6 +7,8 @@ from mm_rag.exceptions import FileNotValidError
 from mm_rag.agents.mm_embedder import Embedder
 from mm_rag.logging_service.log_config import create_logger
 
+from langchain_core.documents import Document
+
 from typing import Type
 import os
 import asyncio
@@ -125,8 +127,8 @@ class Piper:
   ) -> None:
     self.factory = factory
 
-  def _get(self, file_path, auth) -> tuple[upl.Uploader, extr.Extractor]:  # Add `embedder: Embedder`
-    extractor = self.factory.get_extractor(file_path, auth)  # Add embedder
+  def _get(self, file_path, auth) -> tuple[upl.Uploader, extr.Extractor]:
+    extractor = self.factory.get_extractor(file_path, auth)
     uploader = self.factory.get_uploader(file_path, auth)
 
     return uploader, extractor

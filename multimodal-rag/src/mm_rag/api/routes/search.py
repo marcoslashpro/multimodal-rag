@@ -11,8 +11,6 @@ from mm_rag.api.utils import authorize
 from mm_rag.api.models import Query
 from mm_rag.exceptions import MalformedResponseError
 
-from uuid import uuid4
-
 
 logger = create_logger(__name__)
 search_router = APIRouter()
@@ -32,12 +30,12 @@ def search(query: Query, auth_pat: Annotated[HTTPAuthorizationCredentials, Depen
   try:
     retrieved = query_vectorstore(query.query, user.user_id)
   except MalformedResponseError as e:
-    msg = f"Error while querying the vectorstore with query: {query.query}"
-    logger.error(msg + str(e))
+    msg = f"Error while querying the vectorstore with query: {query.query}: {e}"
+    logger.error(msg)
 
     raise HTTPException(
       status_code=500,
-      detail=msg + str(e)
+      detail=msg
     )
 
   return JSONResponse(

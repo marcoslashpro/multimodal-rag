@@ -3,7 +3,7 @@ from mm_rag.api.main import app
 from PIL import Image
 from reportlab.pdfgen import canvas
 from docx import Document
-from fastapi import Response
+from httpx._models import Response
 from fastapi.responses import JSONResponse
 
 from io import BufferedReader
@@ -82,7 +82,7 @@ def send_chat_request(prompt: str) -> Response | JSONResponse:
   return _send(prompt)
 
 
-def send_search_request(query: str) -> Response | JSONResponse:
+def send_search_request(query: str) -> Response:
   return test_client.post(
       '/search',
       headers={"Authorization": f"Bearer {get_secret()['bearer_pat']}"},

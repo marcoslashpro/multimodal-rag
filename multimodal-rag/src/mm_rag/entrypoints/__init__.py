@@ -34,9 +34,9 @@ def query_vectorstore(query_input: str, namespace: str) -> list[Document]:
   logger.info(f"Querying the VectorStore with input: {query_input}")
   retriever = setup.factory.get_retriever(namespace)
   try:
-    retrieved = retriever.invoke(query_input)
+    retrieved = retriever.retrieve(query_input)
   except MalformedResponseError as e:
-    raise MalformedResponseError() from e
+    raise MalformedResponseError(e) from e
 
   return retrieved
 
