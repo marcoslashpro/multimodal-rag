@@ -5,6 +5,8 @@ if TYPE_CHECKING:
 from mm_rag.logging_service.log_config import create_logger
 from mm_rag.agents.prompts import retrieval_prompt, failed_retrieval_prompt
 
+import mm_rag.datastructures as ds
+
 
 logger = create_logger(__name__)
 
@@ -40,45 +42,29 @@ def formatter(state: 'State'):
     }
 
   for doc in retrieved:
+    doc_type = doc.metadata.get('file_type')
     doc_id = doc.id
-    doc_type = doc.metadata.get("fileType")
     logger.debug(f"Working with doc {doc_id} of type {doc_type}")
 
-    if not doc_type or not doc_id:
-      return {
-        "messages": [
+    if doc_id:
+      if doc_type in ds.FileType.IMAGE.value:
+        img_url = bucket.generate_presigned_url(doc_id)
+        final_message_content.append(
           {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": failed_retrieval_prompt
-              }
-            ]
+            "type": "image_url",
+            "image_url": {
+              "url": img_url
+            }
           }
-        ]
-      }
+        )
 
-    doc_type = doc_type.lower().lstrip(".")
-
-    if doc_type in ['jpeg', 'png', 'jpg', 'pdf']:
-      img_url = bucket.generate_presigned_url(doc_id)
-      final_message_content.append(
-        {
-          "type": "image_url",
-          "image_url": {
-            "url": img_url
+      else:
+        final_message_content.append(
+          {
+            "type": "text",
+            "text": doc.page_content
           }
-        }
-      )
-
-    else:
-      final_message_content.append(
-        {
-          "type": "text",
-          "text": doc.page_content
-        }
-      )
+        )
 
   logger.debug(f"Augmented message content generated successfully: {final_message_content}")
 

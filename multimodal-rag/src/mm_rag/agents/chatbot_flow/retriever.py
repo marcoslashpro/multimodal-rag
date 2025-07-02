@@ -14,7 +14,7 @@ def retrieve(state: 'State'):
   query = state['query']
   logger.debug(f"Running retrieval on input: {last_message}")
 
-  retrieved: list = retriever.invoke(last_message.content)
+  retrieved: list = retriever.retrieve(last_message.content)
   logger.debug(f"Found in the VectorStore: {retrieved}")
 
   return {"retrieved": retrieved, 'query': query}

@@ -123,6 +123,12 @@ class TxtUploader(Uploader):
 
     try:
       for doc in file.docs:
+        if doc.id is None:
+          raise ObjectUpsertionError(
+            storage=ds.Storages.BUCKET,
+            msg=f'Missing id in doc: {doc}'
+          )
+
         self.bucket.upload_object(
           doc.id, doc.page_content
         )
