@@ -179,13 +179,14 @@ class BucketService():
       return True
     return True
 
-  def delete_all(self) -> bool:
+  def delete_all(self, user_id: str) -> bool:
     response: dict[str, Any] = self.client.list_objects(Bucket=self.bucket.name)
     contents = response.get('Contents')
     if not contents:
       raise ObjectDeletionError(Storages.BUCKET)
 
-    obj_keys: list[dict[str, str]] = [{"Key": obj['Key']} for obj in contents]
+    obj_keys: list[dict[str, str]] = [{"Key": obj['Key']} for obj in contents if obj['Key'].startswith(user_id)]
+    logger.debug(f'Object Keys: {obj_keys}')
 
     try:
 
@@ -199,8 +200,8 @@ class BucketService():
 
     return True
 
-  async def adelete_all(self):
-    await asyncio.to_thread(self.delete_all)
+  async def adelete_all(self, user_id: str):
+    await asyncio.to_thread(self.delete_all, user_id=user_id)
 
   def make_public(self):
     """

@@ -42,12 +42,12 @@ def create_docx(path: str):
   doc.save(path)
 
 
-def send_file_request(file_path: str, content: BufferedReader | bytes,
+def send_file_request(file_path: str, content: BufferedReader | bytes, token: str,
                  content_type: str = "multipart/form-data") -> Response | JSONResponse:
   def _send(name: str, file_content: bytes) -> Response:
     return test_client.post(
       '/upload-file',
-      headers={"Authorization": f"Bearer {get_secret()['bearer_pat']}"},
+      headers={"Authorization": f"Bearer {token}"},
       files={"file": (name, file_content, content_type)}
     )
 
@@ -89,8 +89,8 @@ def send_search_request(query: str) -> Response | JSONResponse:
       json={"query": query}
     )
 
-def send_cleanup_request() -> Response | JSONResponse:
+def send_cleanup_request(token: str) -> Response | JSONResponse:
   return test_client.post(
     '/cleanUp',
-    headers={"Authorization": f"Bearer {get_secret()['bearer_pat']}"},
+    headers={"Authorization": f"Bearer {token}"},
   )

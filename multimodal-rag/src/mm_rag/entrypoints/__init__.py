@@ -45,7 +45,7 @@ async def cleanup(namespace: str) -> None:
   try:
     async with asyncio.TaskGroup() as tg:
       tg.create_task(setup.factory.get_vector_store(namespace).aclean())
-      tg.create_task(setup.bucket.adelete_all())
+      tg.create_task(setup.bucket.adelete_all(namespace))
 
   except* ObjectDeletionError as eg:
     logger.error(f"Caught the following exceptions in the exception group: {eg.exceptions}")
