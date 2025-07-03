@@ -43,28 +43,35 @@ def formatter(state: 'State'):
 
   for doc in retrieved:
     doc_type = doc.metadata.get('file_type')
+    logger.debug(f'Doc type: {doc_type}')
     doc_id = doc.id
+    if not doc_type or not doc_id:
+      continue
+
     logger.debug(f"Working with doc {doc_id} of type {doc_type}")
 
-    if doc_id:
-      if doc_type in ds.FileType.IMAGE.value:
-        img_url = bucket.generate_presigned_url(doc_id)
-        final_message_content.append(
-          {
-            "type": "image_url",
-            "image_url": {
-              "url": img_url
-            }
+    if doc_type in ds.FileType.IMAGE.value or doc_type == ds.FileType.PDF.value or doc_type == ds.FileType.DOCX.value:
+      logger.debug(f"{doc_type=}  in: {ds.Img, ds.FileType.PDF.value, ds.FileType.DOCX.value}")
+      img_url = bucket.generate_presigned_url(doc_id)
+      final_message_content.append(
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": img_url
           }
-        )
+        }
+      )
 
-      else:
-        final_message_content.append(
-          {
-            "type": "text",
-            "text": doc.page_content
-          }
-        )
+    if doc_type == ds.FileType.TXT.value or doc_type in ds.FileType.CODE.value:
+      final_message_content.append(
+        {
+          "type": "text",
+          "text": doc.page_content
+        }
+      )
+
+    else:
+      continue
 
   logger.debug(f"Augmented message content generated successfully: {final_message_content}")
 

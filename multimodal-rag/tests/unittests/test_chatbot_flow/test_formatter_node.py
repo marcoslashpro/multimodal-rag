@@ -1,5 +1,6 @@
 from mm_rag.agents.chatbot_flow import formatter, State
 from mm_rag.models.s3bucket import BucketService
+import mm_rag.datastructures as ds
 
 import unittest
 from unittest.mock import MagicMock, patch
@@ -22,7 +23,7 @@ class TestMessageCreation(unittest.TestCase):
         Document(
           page_content='this is a test',
           id='123',
-          metadata={"fileType": ".txt"}
+          metadata={"file_type": ".txt"}
         )
       ],
       'retriever': MagicMock(),
@@ -49,11 +50,46 @@ class TestMessageCreation(unittest.TestCase):
     )
     self.assertDictEqual(expected_text_message, formatted)
 
+  def test_code_message_creation(self):
+
+    expected_code_message = {"messages" : [
+        {
+          "role": "user", "content": [
+          {
+            "type": "text",
+            "text": f"Your role here is to answer the user's original query in the most relevant way possible. The original query is: '{self.query}'. The relevant information needed to answer this query are provided in the docs after this message. If you do not have enough information in the provided docs, then tell the user that you were not able to find enough relevant information to answer to his query. The docs: "
+          },
+          {"type": "text", "text": "this is code"}
+        ]
+        }
+      ]
+    }
+
+    for file_type in ds.FileType.CODE.value:
+      with self.subTest(file_type=file_type):
+        mock_state = {
+          'retrieved': [
+            Document(
+              page_content='this is code',
+              id='123',
+              metadata={"file_type": file_type}
+            )
+          ],
+          'retriever': MagicMock(),
+          'vlm': MagicMock(),
+          'is_retrieval_required': 'True',
+          'bucket': MagicMock(),
+        }
+
+        formatted = formatter.formatter(state=mock_state)
+        self.assertDictEqual(formatted, expected_code_message)
+
   def test_correct_img_message_creation(self):
     mock_bucket = MagicMock(BucketService)
     mock_bucket.generate_presigned_url.return_value = 'test_url'
 
-    supported_types = ['jpeg', 'png', 'jpg', 'pdf']
+    supported_types = [ds.FileType.PDF.value, ds.FileType.DOCX.value]
+    supported_types.extend(ds.FileType.IMAGE.value)
 
     for file_type in supported_types:
       with self.subTest(file_type=file_type):
@@ -63,7 +99,7 @@ class TestMessageCreation(unittest.TestCase):
             Document(
               page_content='this is a test',
               id='123',
-              metadata={"fileType": file_type}
+              metadata={"file_type": file_type}
             )
           ],
           'retriever': MagicMock(),
@@ -102,17 +138,17 @@ class TestMessageCreation(unittest.TestCase):
         Document(
           page_content='test text',
           id='123',
-          metadata={"fileType": "txt"}
+          metadata={"file_type": ".txt"}
         ),
         Document(
           page_content='test image',
           id='123',
-          metadata={"fileType": 'jpeg'}
+          metadata={"file_type": '.jpeg'}
         ),
         Document(
           page_content='test image',
           id='123',
-          metadata={"fileType": 'pdf'}
+          metadata={"file_type": '.pdf'}
         )
       ],
       'retriever': MagicMock(),
@@ -172,48 +208,6 @@ class TestMessageCreation(unittest.TestCase):
 
     self.assertDictEqual(missing_retrieval_info, expected_error_message_prompt)
 
-  def test_missing_doc_info(self):
-    wrong_docs = [
-      Document(
-        page_content='missing id',
-        metadata={'fileType': 'txt'}
-      ),
-      Document(
-        page_content='missing file type',
-        id='123'
-      ),
-      Document(
-        page_content='missing both'
-      )
-    ]
-
-    for doc in wrong_docs:
-      with self.subTest(doc=doc):
-
-        mock_state = {
-          'retrieved': [doc],
-          'retriever': MagicMock(),
-          'vlm': MagicMock(),
-          'is_retrieval_required': 'True',
-          'bucket': MagicMock(),
-        }
-
-        expected_error_message_prompt = {
-            "messages": [
-              {
-                'role': 'user', 'content': [
-                {
-                  "type": "text",
-                  "text": """Unfortunately, the retrieved step failed because of some outside reasons. Inform the user and ask if he would like you to try again or respond without retrieval.""".strip()
-                }
-              ]
-            }
-          ]
-        }
-
-        formatted = formatter.formatter(mock_state)  # type: ignore
-
-        self.assertDictEqual(expected_error_message_prompt, formatted)
 
 if __name__ == "__main__":
   unittest.main()

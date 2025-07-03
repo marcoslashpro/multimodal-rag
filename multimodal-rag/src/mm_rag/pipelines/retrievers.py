@@ -74,7 +74,7 @@ class Retriever(BaseRetriever):
     docs: list[Document] = []
     content_buffer = io.BytesIO()
 
-    for match in pinecone_response['matches']:
+    for match in pinecone_response.get('matches'):
       match_id = match.get('id') or match.get('_id')
       if not match_id:
         raise MalformedResponseError(
@@ -108,10 +108,3 @@ class Retriever(BaseRetriever):
 
     return docs
 
-  @staticmethod
-  def from_docs_to_string(docs: list[Document]) -> str:
-    string_docs = ''
-    for doc in docs:
-      string_docs += json.dumps(doc.to_json()['kwargs']) + '\n\n' # type: ignore[call-args]
-
-    return string_docs

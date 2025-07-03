@@ -72,39 +72,22 @@ class PineconeVectorStore:
     except Exception as e:
       raise
 
-  def add(self, file: ds.File) -> None:
-    if not len(file.docs) == len(file.embeddings):
-      raise ObjectUpsertionError(
-        storage=ds.Storages.VECTORSTORE,
-        msg=f"Length of docs and embeddings of file {file.metadata.file_id} do not match: "
-          "{len(file.docs)} != {len(file.embeddings)}"
-      )
-
+  def upload(self, id: str, embeddings: list[float], metadata: dict[str, str | int], collection: str) -> None:
     try:
-      for doc, embeddings in zip(file.docs, file.embeddings):
-        if not doc.id:
-          raise ObjectUpsertionError(
-            storage=ds.Storages.VECTORSTORE,
-            msg=f"Invalid document generated, missing id for doc: {doc}"
-          )
-
         self.index.upsert(
           [
             Vector(
-              id=doc.id,
+              id=id,
               values=embeddings,
-              metadata=doc.metadata
+              metadata=metadata  # type: ignore[call-args]
           )],
-          namespace=self._generate_full_namespace(file.metadata.collection)
+          namespace=collection
         )
     except pinecone.exceptions.PineconeException as e:
       raise ObjectUpsertionError(
         storage=ds.Storages.VECTORSTORE,
         msg=str(e)
       ) from e
-
-  def _generate_full_namespace(self, collection: str) -> str:
-    return self.namespace + f"/{collection}"
 
   def add_image(
       self,

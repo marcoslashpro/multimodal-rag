@@ -42,22 +42,15 @@ def test_add_throws_mismatching_length(docs, emb):
   file.docs = docs
   file.embeddings = emb
   with pytest.raises(ObjectUpsertionError):
-    vector_store.add(file)
+    vector_store.upload(file.metadata.file_id, file.embeddings[0], file.docs[0].metadata, file.metadata.collection)
 
 
 def test_add_throws_missing_id():
   file.docs = [Document(page_content='test')]
   file.embeddings = [[0.1]]
   with pytest.raises(ObjectUpsertionError):
-    vector_store.add(file)
+    vector_store.upload(file.metadata.file_id, file.embeddings[0], file.docs[0].metadata, file.metadata.collection)
 
-
-@pytest.mark.parametrize('collection', [
-  'audio', 'other'
-])
-def test_right_namespace_creation(collection):
-  assert vector_store._generate_full_namespace(collection) == \
-         f"{vector_store.namespace}/{collection}"
 
 
 if __name__ == "__main__":
