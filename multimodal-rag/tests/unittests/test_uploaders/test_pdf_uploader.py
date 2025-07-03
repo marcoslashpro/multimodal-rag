@@ -24,7 +24,7 @@ PDF_UPLOADER = PdfUploader(
 
 
 def test_vector_store_upload_success():
-  with patch.object(PDF_UPLOADER.vector_store, 'add') as mock_add:
+  with patch.object(PDF_UPLOADER.vector_store, 'upload') as mock_add:
     PDF_UPLOADER.upload_in_vector_store(mock_file)
 
   mock_add.assert_called_once_with(
